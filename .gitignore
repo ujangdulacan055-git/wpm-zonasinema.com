@@ -36,4 +36,4 @@ logs/
 
 # Dependency folders (kalau nanti ada composer/npm)
 vendor/
-node_modules/
+node_modules/docs/
