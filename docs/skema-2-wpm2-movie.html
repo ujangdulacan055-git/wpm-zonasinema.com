@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>WPM 2 - Skema 2 | Roadmap Progress</title>
+<style>
+  *{box-sizing:border-box;}
+  body{font-family:-apple-system,'Segoe UI',sans-serif;background:#f4f5f7;margin:0;padding:40px 20px;color:#1a2233;}
+  .wrap{max-width:720px;margin:0 auto;}
+  h1{font-size:24px;margin:0 0 4px;text-align:center;line-height:1.25;}
+  .sub{text-align:center;color:#6b7686;font-size:13px;margin:0 0 32px;}
+
+  .kepala{background:#fbeaec;border:2px solid #7a1524;border-radius:14px;padding:18px 22px;text-align:center;margin-bottom:32px;}
+  .kepala .title{font-weight:800;font-size:18px;margin:0 0 4px;}
+  .kepala .desc{font-size:13px;color:#4b5563;margin:0 0 10px;}
+  .kepala .status{font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;display:inline-block;background:#7a1524;color:#fff;}
+
+  .list{display:flex;flex-direction:column;gap:10px;}
+  .item{display:flex;align-items:flex-start;gap:14px;border-radius:12px;padding:14px 18px;border:2px solid;}
+  .item.done{background:#eaf7ee;border-color:#2f9e5c;}
+  .item.progress{background:#fff8e6;border-color:#d9a441;}
+  .item.blocked{background:#fdecec;border-color:#c94b4b;border-style:dashed;}
+  .item.hold{background:#eef2fb;border-color:#90a3c9;border-style:dashed;}
+
+  .num{flex-shrink:0;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;color:#fff;margin-top:2px;}
+  .item.done .num{background:#2f9e5c;}
+  .item.progress .num{background:#d9a441;}
+  .item.blocked .num{background:#c94b4b;}
+  .item.hold .num{background:#90a3c9;}
+
+  .item-body{flex:1;min-width:0;}
+  .item-title{font-weight:800;font-size:15px;margin:0 0 2px;}
+  .item-desc{font-size:12.5px;color:#4b5563;line-height:1.5;margin:0 0 8px;}
+  .status{font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;display:inline-block;}
+  .item.done .status{background:#2f9e5c;color:#fff;}
+  .item.progress .status{background:#d9a441;color:#fff;}
+  .item.blocked .status{background:#c94b4b;color:#fff;}
+  .item.hold .status{background:#90a3c9;color:#fff;}
+
+  .legend{display:flex;justify-content:center;gap:18px;margin-top:28px;flex-wrap:wrap;font-size:12px;}
+  .legend .lgitem{display:flex;align-items:center;gap:6px;}
+  .swatch{width:14px;height:14px;border-radius:4px;}
+
+  .footnote{text-align:center;font-size:11px;color:#9aa2ae;margin-top:24px;line-height:1.6;}
+  .niche-badge{display:block;text-align:center;background:#fff3cd;color:#8a6400;border:1px solid #e0b64a;border-radius:8px;padding:10px 16px;font-size:12px;font-weight:700;margin-top:24px;}
+
+  .item.note{background:#f4f5f7;border-color:#c3c8d1;border-style:dashed;}
+  .item.note .num{background:#8890a0;}
+  .item.note .status{background:#8890a0;color:#fff;}
+  .note-warn{background:#fdecec;border:1px solid #c94b4b;border-radius:8px;padding:10px 12px;font-size:12px;color:#7a1524;margin-top:10px;line-height:1.6;}
+  .arch-compare{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;}
+  .arch-col{background:#fff;border:1px solid #e4e4e7;border-radius:8px;padding:10px 12px;font-size:12px;line-height:1.7;color:#3f3f46;}
+  .arch-col strong{display:block;margin-bottom:4px;color:#18181b;}
+  @media (max-width:520px){.arch-compare{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>WPM 2 - SKEMA 2 | ROADMAP PROGRESS</h1>
+  <p class="sub">Update 23 Agu 2026 — poin 1-8 &amp; 10 selesai, poin 9 catatan referensi, poin 11 on hold</p>
+
+  <div class="kepala">
+    <div class="title">WPM 2 — ZonaSinema.com</div>
+    <div class="desc">Domain: <strong>zonasinema.com</strong> — Movie/Film review &amp; database murni. Tanpa AdSense dulu — tujuan awal murni bangun traffic &amp; impresi organik di Google Search Console.</div>
+    <span class="status">Pre-production selesai — siap publish</span>
+  </div>
+
+  <div class="list">
+    <div class="item done">
+      <div class="num">1</div>
+      <div class="item-body">
+        <div class="item-title">Mockup Desain Frontend — Homepage</div>
+        <div class="item-desc">Marun + gold, Bebas Neue + Manrope, poster slider.</div>
+        <span class="status">✅ Selesai</span>
+      </div>
+    </div>
+
+    <div class="item done">
+      <div class="num">2</div>
+      <div class="item-body">
+        <div class="item-title">Halaman Detail Film</div>
+        <div class="item-desc">Develop dari mockup yang udah di-approve → kode PHP, screenshot terverifikasi.</div>
+        <span class="status">✅ Selesai</span>
+      </div>
+    </div>
+
+    <div class="item done">
+      <div class="num">3</div>
+      <div class="item-body">
+        <div class="item-title">Isolasi Database</div>
+        <div class="item-desc">DB_NAME → wpm2, seed data ZonaSinema.</div>
+        <span class="status">✅ Selesai</span>
+      </div>
+    </div>
+
+    <div class="item done">
+      <div class="num">4</div>
+      <div class="item-body">
+        <div class="item-title">Cleanup Pra-Produksi</div>
+        <div class="item-desc">Mobile nav, CSS mati, sortir string sagagoal, audit pagar keras. Termasuk sisa modul sport: cron sync, API client, settings-form, sidebar link mati, dashboard link — dicabut. ENUM ads.php diubah (0 baris kepengaruh, dikonfirmasi dulu).</div>
+        <span class="status">✅ Selesai</span>
+      </div>
+    </div>
+
+    <div class="item done">
+      <div class="num">5</div>
+      <div class="item-body">
+        <div class="item-title">Infrastruktur Produksi</div>
+        <div class="item-desc">cPanel baru, domain, Cloudflare — disiapkan operator.</div>
+        <span class="status">✅ Selesai</span>
+      </div>
+    </div>
+
+    <div class="item done">
+      <div class="num">6</div>
+      <div class="item-body">
+        <div class="item-title">Repo Git Independen</div>
+        <div class="item-desc">Repo baru dibuat operator, lepas dari sagacrypto-wpm-goal (WPM 1).</div>
+        <span class="status">✅ Selesai</span>
+      </div>
+    </div>
+
+    <div class="item done">
+      <div class="num">7</div>
+      <div class="item-body">
+        <div class="item-title">Growth Agent Safety</div>
+        <div class="item-desc">Toggle auto-publish dikonfirmasi off, 0 job pending. (8 prompt masih niche olahraga — revisi konten menyusul, bukan lagi risiko keamanan.)</div>
+        <span class="status">✅ Selesai (aman)</span>
+      </div>
+    </div>
+
+    <div class="item done">
+      <div class="num">8</div>
+      <div class="item-body">
+        <div class="item-title">Skema Database Film + Integrasi TMDb</div>
+        <div class="item-desc">Tabel films/genre dibuat, ~35 film asli diimport dari TMDb (poster/rating/cast/genre/trailer). Genre bar & filter tahun & Terpopuler sekarang beneran fungsional — diverifikasi visual tiap genre nampilin film beda-beda. Atribusi TMDb ditambahin di footer.</div>
+        <span class="status">✅ Selesai</span>
+      </div>
+    </div>
+
+    <div class="item note">
+      <div class="num">9</div>
+      <div class="item-body">
+        <div class="item-title">Arsitektur Website Streaming — Catatan Referensi</div>
+        <div class="arch-compare">
+          <div class="arch-col">
+            <strong>Torrent</strong>
+            Peer → download potongan file → gabungkan
+          </div>
+          <div class="arch-col">
+            <strong>Streaming</strong>
+            Server → kirim potongan video → player → tonton
+          </div>
+        </div>
+        <div class="arch-col" style="margin-top:10px;">
+          <strong>Masalah torrent</strong>
+          Bergantung pada seeder · tidak stabil · sulit untuk banyak penonton
+        </div>
+        <span class="status" style="margin-top:10px;">⏸️ On hold</span>
+      </div>
+    </div>
+
+    <div class="item done">
+      <div class="num">10</div>
+      <div class="item-body">
+        <div class="item-title">Pra-Launch &amp; Deploy</div>
+        <div class="item-desc">cPanel baru, domain zonasinema.com, Cloudflare, dan repo Git independen (lepas dari GIT WPM 1). semuanya disiapkan &amp; disambungkan operator sendiri. Belum (non-blocking): GSC property baru untuk domain ini, verifikasi visual production terakhir setelah deploy — masih perlu dicek operator.</div>
+        <span class="status">✅ Selesai</span>
+      </div>
+    </div>
+
+    <div class="item hold">
+      <div class="num">11</div>
+      <div class="item-body">
+        <div class="item-title">AI Automation Layer (Growth Agent)</div>
+        <div class="item-desc">Modul Growth Agent ikut ter-clone dari WPM 1. Toggle auto-publish dikonfirmasi OFF, 0 job pending — aman, tidak generate konten apapun untuk ZonaSinema. 8 system prompt-nya masih berasumsi niche olahraga, belum direvisi. Operator masih mikirin arah modul ini — sengaja belum dipakai/dilanjut dulu.</div>
+        <span class="status">⏸️ On hold</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="legend">
+    <div class="lgitem"><span class="swatch" style="background:#eaf7ee;border:2px solid #2f9e5c;"></span>Selesai</div>
+    <div class="lgitem"><span class="swatch" style="background:#fff8e6;border:2px solid #d9a441;"></span>Sedang berjalan</div>
+    <div class="lgitem"><span class="swatch" style="background:#fdecec;border:2px dashed #c94b4b;"></span>Blocked</div>
+    <div class="lgitem"><span class="swatch" style="background:#eef2fb;border:2px dashed #90a3c9;"></span>On hold</div>
+    <div class="lgitem"><span class="swatch" style="background:#f4f5f7;border:2px dashed #c3c8d1;"></span>Catatan referensi</div>
+  </div>
+
+  <p class="footnote">
+    Struktur ini TERPISAH TOTAL dari Skema 1 (WPM 1 — Sagagoal.com) — database, domain, kredensial, repo Git,
+    dan tentakel semuanya independen, tidak backlink ke gurita yang sudah ada. Pagar keras: TIDAK ADA
+    player/embed/link streaming video dalam bentuk apapun di WPM 2 manapun — audit menyeluruh 22 Agu 2026
+    hasilnya nol pelanggaran. Detail lengkap: <code>docs/ROADMAP.md</code> di folder <code>wpm2_movie</code>.
+  </p>
+</div>
+</body>
+</html>

@@ -1079,21 +1079,17 @@ if (!function_exists('cms_gsc_default_opportunity_thresholds')) {
                 // site's homepage/section URL (e.g. a sports section), not
                 // a feed URL directly — the fetcher tries well-known feed
                 // paths per source first (see
-                // cms_growth_agent_fetch_trending_source()). Both entries
-                // below verified LIVE 7 Aug 2026 by actually fetching
-                // {source}/rss and confirming a real RSS 2.0 response
-                // (title/link/pubDate items) — NOT the doc's original
-                // assumption that detik.com needed HTML scraping; that
-                // assumption turned out to be wrong; detik's /rss path
-                // works cleanly, so the HTML-scrape fallback is exercised
-                // by neither of these two defaults today, only by whatever
-                // a future source without an /rss or /feed path needs. This
-                // is NOT a claim that any arbitrary URL added here will
-                // parse correctly — structure varies per site and the
-                // scrape fallback is a best effort, not a guarantee.
+                // cms_growth_agent_fetch_trending_source()). Re-pointed to
+                // ZonaSinema's movie niche 24 Aug 2026 (was sport.detik.com /
+                // cnnindonesia.com/olahraga from the original Sagagoal
+                // build) — see each URL's own RSS-availability check note
+                // where recorded. This is NOT a claim that any arbitrary
+                // URL added here will parse correctly — structure varies
+                // per site and the HTML-scrape fallback is a best effort,
+                // not a guarantee.
                 'sources' => [
-                    'https://sport.detik.com',
-                    'https://www.cnnindonesia.com/olahraga',
+                    'https://hot.detik.com/movie',
+                    'https://www.cnnindonesia.com/hiburan/film',
                 ],
                 // How old the LAST successful refresh can be before
                 // cms_growth_agent_refresh_trending_headlines_if_stale()
@@ -1393,8 +1389,10 @@ if (!function_exists('cms_gsc_default_opportunity_thresholds')) {
                 // both go through the same fetcher
                 // (cms_growth_agent_fetch_trending_source()).
                 'source_urls' => [
-                    'https://www.detik.com/tag/sepak-bola',
-                    'https://www.cnnindonesia.com/olahraga',
+                    'https://hot.detik.com/movie',
+                    'https://www.cnnindonesia.com/hiburan/film',
+                    'https://www.detik.com/tag/film-indonesia',
+                    'https://www.kapanlagi.com/tag/review-film/',
                 ],
                 // Hard daily cap, INDEPENDENT of how many hours are checked
                 // in schedule_cron (8 Aug 2026 — requested by project owner:

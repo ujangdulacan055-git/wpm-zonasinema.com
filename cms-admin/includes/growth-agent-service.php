@@ -180,7 +180,7 @@ function cms_growth_agent_ensure_schema(PDO $pdo): void
         'growth_agent_trending_headlines',
         "id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
          headline VARCHAR(500) NOT NULL,
-         source VARCHAR(255) NOT NULL COMMENT 'the configured source URL this came from, e.g. https://sport.detik.com',
+         source VARCHAR(255) NOT NULL COMMENT 'the configured source URL this came from, e.g. https://hot.detik.com/movie',
          url VARCHAR(500) NOT NULL,
          published_at DATETIME DEFAULT NULL COMMENT 'NULL if the source did not expose a parseable timestamp',
          fetched_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
@@ -396,7 +396,7 @@ function cms_growth_agent_generate_topic_clusters(PDO $pdo): array
     }
 
     $defaultSystemPrompt =
-        'You are the Growth Agent SEO strategist for Sagagoal, a livescore & sports news website. ' .
+        'You are the Growth Agent SEO strategist for ZonaSinema, a movie review & database website. ' .
         'You are given a list of published articles (slug, title, short description). Group them into ' .
         'topic clusters based on topical similarity / shared search intent. For each cluster, pick the ' .
         'single most comprehensive/representative article as the "pillar" and the rest as "supporting". ' .
@@ -547,7 +547,7 @@ function cms_growth_agent_generate_content_conflicts(PDO $pdo): array
     }
 
     $defaultSystemPrompt =
-        'You are the Growth Agent SEO strategist for Sagagoal, a livescore & sports news website. ' .
+        'You are the Growth Agent SEO strategist for ZonaSinema, a movie review & database website. ' .
         'You are given a list of published articles (slug, title, short description). Find PAIRS of ' .
         'articles whose search intent is too similar and at risk of cannibalizing each other in Google ' .
         'Search (competing for the same queries). For each pair, give a risk level (low/medium/high), a ' .
@@ -668,13 +668,16 @@ function cms_growth_agent_generate_content_conflicts(PDO $pdo): array
 
 /**
  * Tokenizer + stopword filter for the gate's topic-similarity checks — not
- * a general NLP tool, tuned specifically for short Indonesian sports-news
- * phrases (GSC queries, article titles, topic-gap labels). Strips
- * punctuation, lowercases, and removes both standard Indonesian function
- * words AND terms that are generic on THIS site specifically ("jadwal",
- * "hasil", "live", "streaming", "vs", "skor", "berita", ...). The
- * sports-generic half matters as much as the stopword half: without it,
- * almost every headline on a livescore site shares 3-4 of those words
+ * a general NLP tool, tuned specifically for short Indonesian phrases on
+ * this site's niche (GSC queries, article titles, topic-gap labels).
+ * Originally tuned for sports-news vocabulary (Sagagoal); retuned for
+ * movie-review vocabulary 24 Aug 2026 (ZonaSinema) — old sports-generic
+ * terms kept rather than removed since they're harmless no-ops now, not
+ * actively wrong. Strips punctuation, lowercases, and removes both
+ * standard Indonesian function words AND terms that are generic on THIS
+ * site specifically ("film", "trailer", "sutradara", "review", ...). The
+ * niche-generic half matters as much as the stopword half: without it,
+ * almost every article on a movie-review site shares 3-4 of those words
  * regardless of actual topic, which would flag nearly any two articles as
  * "similar" and train operators to ignore the warning entirely.
  *
@@ -730,6 +733,17 @@ function cms_growth_agent_g0_tokenize(string $text): array
             // don't even reach that machinery.
             'paling', 'sangat', 'lebih', 'sekali', 'bakal', 'makin', 'banget', 'cukup', 'agak',
             'terlalu', 'amat', 'begitu', 'terus', 'masih', 'selalu', 'kembali', 'kian',
+            // Generic on a movie-review/database site (added 24 Aug 2026,
+            // ZonaSinema niche migration) — words like "film"/"trailer"/
+            // "sutradara"/"pemeran" recur across almost every article
+            // regardless of which title/genre/cast is actually involved,
+            // same "generic vocabulary" reasoning as the transfer-window
+            // block above.
+            'film', 'movie', 'sinema', 'bioskop', 'trailer', 'teaser', 'sutradara', 'pemeran', 'aktor',
+            'aktris', 'produser', 'skenario', 'naskah', 'adegan', 'genre', 'sekuel', 'prekuel', 'remake',
+            'reboot', 'spin', 'off', 'box', 'office', 'rilis', 'tayang', 'streaming', 'ulasan', 'review',
+            'sinopsis', 'plot', 'karakter', 'peran', 'casting', 'syuting', 'produksi', 'studio', 'rating',
+            'skor', 'penghargaan', 'nominasi', 'festival', 'layar', 'lebar', 'original', 'series',
         ]);
     }
 
@@ -1038,7 +1052,7 @@ function cms_growth_agent_find_similar_published_articles(PDO $pdo, string $topi
 /**
  * ── Trending Headlines (GROWTH_AGENT_V2_PROPOSAL.md § 5, 6 Aug 2026) ──
  *
- * External sports-news headlines folded into the Article Idea prompt as
+ * External movie/entertainment-news headlines folded into the Article Idea prompt as
  * inspiration/context — NEVER content to copy. Legal boundary, enforced by
  * what this section physically stores: headline text + link + publish
  * time only (growth_agent_trending_headlines — see
@@ -1064,10 +1078,10 @@ function cms_growth_agent_find_similar_published_articles(PDO $pdo, string $topi
  *      verified today), not something that works for "any URL" by
  *      construction.
  *
- * Both defaults (sport.detik.com, cnnindonesia.com/olahraga) were verified
- * 7 Aug 2026 to have a working "{source}/rss" feed, so in practice neither
- * exercises the scrape fallback today — it exists for sources an admin
- * adds later that don't publish RSS.
+ * Both defaults (hot.detik.com/movie, cnnindonesia.com/hiburan/film) were
+ * re-pointed to ZonaSinema's movie niche 24 Aug 2026 (see 'sources' config's
+ * own note on which are verified) — the scrape fallback exists for sources
+ * an admin adds later that don't publish RSS.
  */
 
 /**
@@ -1408,7 +1422,7 @@ function cms_growth_agent_refresh_trending_headlines_if_stale(PDO $pdo): void
  * cms_growth_agent_g0_overlap() a third time in this file, same metric as
  * the SEO-G0 Gate and cms_growth_agent_find_similar_published_articles()
  * above — no new similarity logic). Without this filter, the prompt could
- * suggest "here's a trending story" for something Sagagoal already covered
+ * suggest "here's a trending story" for something ZonaSinema already covered
  * days ago, which defeats the whole point of Bagian 1's collision
  * avoidance for the SAME generate call.
  *
@@ -2822,12 +2836,13 @@ function cms_growth_agent_scan_keyword_expansion(PDO $pdo): array
     $maxTopics = max(1, (int) (cms_growth_agent_keyword_expansion_thresholds($pdo)['max_topics_per_run'] ?? 5));
 
     $defaultSystemPrompt =
-        'You are the Growth Agent content strategist for Sagagoal, an Indonesian-language sports news & ' .
-        'livescore portal covering football (Timnas Indonesia, Liga 1, major European leagues), ' .
-        'basketball/NBA, and Formula 1. You are given a list of articles the site has ALREADY published. ' .
+        'You are the Growth Agent content strategist for ZonaSinema, an Indonesian-language movie review & ' .
+        'database website covering film reviews, ratings, cast/crew profiles, genre roundups, and ' .
+        'synopsis/database entries (Indonesian and international films). You are given a list of articles the site has ALREADY published. ' .
         'Propose ' . $maxTopics . ' NEW article topic ideas that are realistic for this specific site\'s ' .
         'niche and audience, and that are NOT already covered (even partially) by anything in the given ' .
-        'list. Do not propose generic listicles or topics outside football/basketball/F1. Each topic must ' .
+        'list. Do not propose generic listicles or topics outside movie reviews, cast/crew profiles, or ' .
+        'genre roundups. Each topic must ' .
         'be phrased as a concrete, specific article title in Bahasa Indonesia (the site\'s language), not a ' .
         'vague keyword. Respond with ONLY a raw JSON object, no markdown, no code fences, no commentary, ' .
         'in exactly this shape: {"topics": [{"topic": "...", "rationale": "..."}]}';
@@ -3724,7 +3739,7 @@ function cms_growth_agent_run_seo_recommendation_scan(PDO $pdo, array $pages, ar
 
     $defaultSystemPrompt =
         'You are "Agent SEO" reviewing the EXISTING meta_title and meta_description of a published ' .
-        'Sagagoal article (a livescore & sports news site). Given the article title, slug, excerpt, ' .
+        'ZonaSinema article (a movie review & database site). Given the article title, slug, excerpt, ' .
         'content, and its current meta_title/meta_description, suggest an improved meta_title (max 60 ' .
         'characters) and meta_description (max 155 characters) that is more compelling and better ' .
         'optimized for search, in the same language as the content (default Bahasa Indonesia). If the ' .
@@ -3884,8 +3899,8 @@ function cms_growth_agent_generate_content_optimization(PDO $pdo, array $page, s
     $isDecay = !empty($page['is_decay']);
 
     $defaultSystemPrompt = $isDecay
-        ? ('You are the Growth Agent content strategist for Sagagoal, a livescore & sports news website ' .
-            '(football, basketball/NBA, Formula 1). You are given an existing PUBLISHED article that USED ' .
+        ? ('You are the Growth Agent content strategist for ZonaSinema, a movie review & database website ' .
+            '(rating, genre, cast, sutradara, sinopsis). You are given an existing PUBLISHED article that USED ' .
             'TO perform well in Google Search but has recently DECLINED — clicks/impressions dropped ' .
             'significantly versus a comparable earlier period. This is NOT the same situation as an article ' .
             'that simply never broke into page one — this one already worked before, so the priority is ' .
@@ -3893,13 +3908,14 @@ function cms_growth_agent_generate_content_optimization(PDO $pdo, array $page, s
             'slug, excerpt, content, and the decline evidence (previous vs current clicks/impressions), ' .
             'suggest concrete refresh actions — content/statistics that may be outdated and need updating, ' .
             'whether the article still matches current search intent for its queries, sections that may ' .
-            'need rewriting for freshness (e.g. "musim panas 2026" dates, transfer rumors, standings that ' .
+            'need rewriting for freshness (e.g. outdated release-date/streaming-availability info, casting ' .
+            'or production rumors that have since been confirmed/denied, ratings or box office numbers that ' .
             'have since changed). Do not suggest changing the meta title/description (a separate tool ' .
             'handles that). Respond in the same language as the article content (default Bahasa Indonesia). ' .
             'Respond with ONLY a raw JSON object, no markdown, no code fences, no commentary, in exactly ' .
             'this shape: {"suggested_sections": ["...", "..."], "summary": "..."}')
-        : ('You are the Growth Agent content strategist for Sagagoal, a livescore & sports news website ' .
-            '(football, basketball/NBA, Formula 1). You are given an existing PUBLISHED article that already ' .
+        : ('You are the Growth Agent content strategist for ZonaSinema, a movie review & database website ' .
+            '(rating, genre, cast, sutradara, sinopsis). You are given an existing PUBLISHED article that already ' .
             'ranks close to page one for certain search queries but has not broken into the top 10 yet ' .
             '("striking distance"). Given the article title, slug, excerpt, content, its average ranking ' .
             'position, and the queries it ranks for, suggest concrete content improvements — additional ' .
@@ -4015,11 +4031,11 @@ function cms_growth_agent_generate_article_idea(PDO $pdo, array $queryData, stri
     $avgPosition = (float) ($queryData['avg_position'] ?? 0);
 
     $defaultSystemPrompt =
-        'You are the Growth Agent content strategist for Sagagoal, a livescore & sports news website ' .
-        '(football, basketball/NBA, Formula 1). You are given a search query that gets meaningful search ' .
+        'You are the Growth Agent content strategist for ZonaSinema, a movie review & database website ' .
+        '(rating, genre, cast, sutradara, sinopsis). You are given a search query that gets meaningful search ' .
         'impressions but has NO existing article on the site addressing it. Propose a new article idea: a ' .
         'compelling title, and a short outline (3-6 bullet points) covering what the article should ' .
-        'include. Keep it realistic for a sports news/livescore site — not a generic listicle. Respond in ' .
+        'include. Keep it realistic for a movie review & database site — not a generic listicle. Respond in ' .
         'the same language as the query (default Bahasa Indonesia). If the prompt includes a section listing ' .
         'similar existing articles on this site, propose a DIFFERENT angle or framing, not a near-duplicate ' .
         'of any of them. If the prompt includes a section of recent external headlines, treat them ONLY as ' .
@@ -4094,7 +4110,7 @@ function cms_growth_agent_generate_article_idea(PDO $pdo, array $queryData, stri
             $headlineLines[] = '- ' . $headline['headline'];
         }
         $userPromptParts[] =
-            "Recent sports news headlines (context/inspiration only — do NOT copy or closely paraphrase any of these as your title, write something fully original in your own words):\n"
+            "Recent movie/entertainment news headlines (context/inspiration only — do NOT copy or closely paraphrase any of these as your title, write something fully original in your own words):\n"
             . implode("\n", $headlineLines);
     }
 
@@ -6347,8 +6363,8 @@ function cms_growth_agent_generate_auto_draft_article(PDO $pdo): array
         $headline = $selected['headline'];
 
         $defaultSystemPrompt =
-            'You are the Growth Agent content strategist for Sagagoal, an Indonesian-language sports news & ' .
-            'livescore portal (football, basketball/NBA, Formula 1). You are given ONE recent news headline as ' .
+            'You are the Growth Agent content strategist for ZonaSinema, an Indonesian-language movie review & ' .
+            'database website (rating, genre, cast, sutradara, sinopsis). You are given ONE recent news headline as ' .
             'context/inspiration only — you do NOT have the source article\'s body text, and must NEVER attempt ' .
             'to reconstruct or guess its specific quotes/details. Write a COMPLETE, ORIGINAL news or analysis ' .
             'article in Bahasa Indonesia inspired by the headline\'s general topic — a real title, and a full ' .

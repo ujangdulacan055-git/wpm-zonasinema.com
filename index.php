@@ -2,44 +2,32 @@
 declare(strict_types=1);
 
 /**
- * Sagagoal — public homepage. Tabbed news feed ("Untuk Anda" / "Terbaru")
- * with a league/live filter row, a hero card + article list on the left,
- * and a trending sidebar on the right. Replaces the old single-page
- * hero+about+contact homepage — "Tentang Kami" moved to its own page
- * (tentang.php); "Kontak" is now a Special Page served via page.php (see
- * includes/SpecialPages.php).
+ * ZonaSinema — public homepage. Tabbed film feed ("Terbaru" / "Terpopuler")
+ * with a hero card + poster grid on the left, and a trending sidebar on
+ * the right. "Tentang Kami" is its own page (tentang.php); "Kontak" is a
+ * Special Page served via page.php (see includes/SpecialPages.php).
  */
 
 require_once __DIR__ . '/includes/site-bootstrap.php';
 
 // Default tab (10 Agu 2026, permintaan operator) — "Terbaru" adalah tab
 // pertama/utama di homepage, jadi itu yang harus tampil default saat
-// pertama buka index.php tanpa ?tab= sama sekali. Sebelumnya default-nya
-// kebalik (jatuh ke "Untuk Anda" kecuali eksplisit ?tab=terbaru).
-$tab = ($_GET['tab'] ?? '') === 'untuk-anda' ? 'untuk-anda' : 'terbaru';
+// pertama buka index.php tanpa ?tab= sama sekali.
+//
+// Tab kedua diganti dari "Untuk Anda" jadi "Terpopuler" (24 Agu 2026) —
+// "Untuk Anda" itu pola personalized-feed khas portal berita/livescore
+// (butuh sistem rekomendasi yang gak ada), gak masuk akal buat situs
+// database film. "Terpopuler" (urut films.popularity dari TMDb) lebih
+// relevan, mirip pola IMDb/Letterboxd.
+$tab = ($_GET['tab'] ?? '') === 'terpopuler' ? 'terpopuler' : 'terbaru';
 $page = max(1, (int) ($_GET['page'] ?? 1));
 $perPage = 10;
 
-// Sport filter chip (see wpm_sport_filter_row()) — only accept keys that
-// actually exist in the sports registry, so a bogus ?sport= can't silently
-// zero out the feed.
-$sportKeyParam = trim((string) ($_GET['sport'] ?? ''));
-$activeSportKey = null;
-if ($sportKeyParam !== '') {
-    $sportExistsStmt = $pdo->prepare('SELECT 1 FROM sports WHERE `key` = :key LIMIT 1');
-    $sportExistsStmt->execute(['key' => $sportKeyParam]);
-    $activeSportKey = $sportExistsStmt->fetchColumn() ? $sportKeyParam : null;
-}
-
-$where = $tab === 'terbaru'
-    ? "p.status = 'published'"
-    : "p.status = 'published' AND p.is_featured = 1";
+$where = "p.status = 'published'";
 $queryParams = [];
-if ($activeSportKey !== null) {
-    $where .= ' AND p.sport_key = :sportKey';
-    $queryParams['sportKey'] = $activeSportKey;
-}
-$orderBy = $tab === 'terbaru' ? 'p.created_at DESC' : 'p.published_at DESC';
+$orderBy = $tab === 'terbaru'
+    ? 'p.created_at DESC'
+    : '(SELECT f.popularity FROM films f WHERE f.page_id = p.page_id) DESC';
 
 $countStmt = $pdo->prepare("SELECT COUNT(*) FROM pages p WHERE $where");
 $countStmt->execute($queryParams);
@@ -49,10 +37,11 @@ $page = min($page, $totalPages);
 $offset = ($page - 1) * $perPage;
 
 $listStmt = $pdo->prepare(
-    "SELECT p.*, c.name AS category_name, a.name AS author_name
+    "SELECT p.*, c.name AS category_name, a.name AS author_name, f.vote_average
      FROM pages p
      LEFT JOIN article_categories c ON c.id = p.category_id
      LEFT JOIN admins a ON a.admin_id = p.author_id
+     LEFT JOIN films f ON f.page_id = p.page_id
      WHERE $where
      ORDER BY $orderBy
      LIMIT $perPage OFFSET $offset"
@@ -63,31 +52,34 @@ $feedArticles = $listStmt->fetchAll();
 // Hero card is just the first result of page 1 — subsequent pages are a plain list.
 $heroArticle = ($page === 1 && $feedArticles !== []) ? array_shift($feedArticles) : null;
 
-/* ── Trending sidebar: featured articles by views, falls back gracefully if empty ── */
+/* ── Sidebar "Banyak Dicari": 10 film paling banyak dilihat (24 Agu 2026,
+ * permintaan operator — sebelumnya cuma 4 dan dibatasi is_featured=1,
+ * jadi cuma nongol 2 film karena baru 2 yang ke-flag featured dari import
+ * TMDb. Sekarang semua film published ikut diurutkan, gak dibatasi
+ * featured, biar listnya keliatan penuh 10 item. ── */
 $trendingStmt = $pdo->query(
-    "SELECT p.*, a.name AS author_name
+    "SELECT p.*, a.name AS author_name, f.vote_average
      FROM pages p
      LEFT JOIN admins a ON a.admin_id = p.author_id
-     WHERE p.status = 'published' AND p.is_featured = 1
+     LEFT JOIN films f ON f.page_id = p.page_id
+     WHERE p.status = 'published'
      ORDER BY p.views DESC, p.published_at DESC
-     LIMIT 4"
+     LIMIT 10"
 );
 $trendingArticles = $trendingStmt->fetchAll();
 
 /* ── Promo banners (cms-admin/pages/banners.php), placement="home" ── */
 $homeBanners = wpm_banners_active($pdo, 'home');
 
-$paginateUrl = static function (int $p) use ($tab, $activeSportKey): string {
-    $url = 'index.php?tab=' . $tab . '&page=' . $p;
-    return $activeSportKey !== null ? $url . '&sport=' . rawurlencode($activeSportKey) : $url;
+$paginateUrl = static function (int $p) use ($tab): string {
+    return 'index.php?tab=' . $tab . '&page=' . $p;
 };
-$tabUrl = static function (string $t) use ($activeSportKey): string {
-    $url = 'index.php?tab=' . $t;
-    return $activeSportKey !== null ? $url . '&sport=' . rawurlencode($activeSportKey) : $url;
+$tabUrl = static function (string $t): string {
+    return 'index.php?tab=' . $t;
 };
 
-$pageTitle = 'Sagagoal — Livescore & Berita Bola Terkini';
-$pageDescription = 'Sagagoal adalah portal livescore dan berita sepak bola: jadwal pertandingan, skor live, klasemen liga, dan berita terkini.';
+$pageTitle = 'Review & Database Film Terkini';
+$pageDescription = 'Portal review dan database film: sinopsis, rating, jadwal tayang bioskop, dan berita terbaru seputar film.';
 $activeNav = 'beranda';
 $canonicalUrl = wpm_site_url('');
 
@@ -95,17 +87,11 @@ require __DIR__ . '/includes/site-header.php';
 ?>
 
     <div class="crypto-container">
-        <!-- ══════════ LIVE SEKARANG (renders nothing if no live match anywhere) ══════════ -->
-        <?= wpm_live_now_widget($pdo) ?>
-
-        <!-- ══════════ TABS: Terbaru / Untuk Anda (urutan ditukar 9 Agu 2026, permintaan operator) ══════════ -->
+        <!-- ══════════ TABS: Terbaru / Terpopuler ══════════ -->
         <div class="news-tabs">
             <a class="news-tabs__item<?= $tab === 'terbaru' ? ' is-active' : '' ?>" href="<?= wpm_esc($tabUrl('terbaru')) ?>">Terbaru</a>
-            <a class="news-tabs__item<?= $tab === 'untuk-anda' ? ' is-active' : '' ?>" href="<?= wpm_esc($tabUrl('untuk-anda')) ?>">Untuk Anda</a>
+            <a class="news-tabs__item<?= $tab === 'terpopuler' ? ' is-active' : '' ?>" href="<?= wpm_esc($tabUrl('terpopuler')) ?>">Terpopuler</a>
         </div>
-
-        <!-- ══════════ FILTER ROW: Cabang Olahraga ══════════ -->
-        <?= wpm_sport_filter_row($pdo, $tab, $activeSportKey) ?>
 
         <!-- ══════════ PROMO BANNERS (admin-configurable) ══════════ -->
         <?php if ($homeBanners !== []) : ?>
@@ -127,13 +113,24 @@ require __DIR__ . '/includes/site-header.php';
                 <?php endif; ?>
 
                 <?php if ($feedArticles !== []) : ?>
-                    <div class="news-list">
-                        <?php foreach ($feedArticles as $i => $article) : ?>
-                            <?= wpm_news_list_row($article) ?>
-                            <?php if ($i === 4) : ?>
-                                <?= wpm_render_ad_slot($pdo, 'between-article-cards', 'homepage') ?>
-                            <?php endif; ?>
-                        <?php endforeach; ?>
+                    <div class="poster-slider__head">
+                        <h2><?= $tab === 'terbaru' ? 'Film Terbaru' : 'Film Terpopuler' ?></h2>
+                    </div>
+                    <div class="poster-slider-wrap">
+                        <button type="button" class="poster-slider__arrow poster-slider__arrow--prev" aria-label="Geser ke kiri" disabled>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>
+                        </button>
+                        <div class="poster-slider">
+                            <?php foreach ($feedArticles as $i => $article) : ?>
+                                <?= wpm_poster_card($article) ?>
+                                <?php if ($i === 4) : ?>
+                                    <?= wpm_render_ad_slot($pdo, 'between-article-cards', 'homepage') ?>
+                                <?php endif; ?>
+                            <?php endforeach; ?>
+                        </div>
+                        <button type="button" class="poster-slider__arrow poster-slider__arrow--next" aria-label="Geser ke kanan">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+                        </button>
                     </div>
                 <?php elseif ($heroArticle === null) : ?>
                     <div class="empty-state"><?= wpm_icon('news') ?><p>Belum ada artikel untuk ditampilkan.</p></div>
@@ -154,7 +151,7 @@ require __DIR__ . '/includes/site-header.php';
             <aside class="news-layout__sidebar">
                 <?php if ($trendingArticles !== []) : ?>
                 <div class="trending-panel">
-                    <h2 class="trending-panel__title"><?= wpm_icon('flame') ?> Sedang Tren</h2>
+                    <h2 class="trending-panel__title">🔥 Banyak Dicari</h2>
                     <?php foreach ($trendingArticles as $i => $article) : ?>
                         <?= wpm_trending_item($article, $i + 1) ?>
                     <?php endforeach; ?>
@@ -178,8 +175,41 @@ require __DIR__ . '/includes/site-header.php';
         </div>
     </div>
 
-    <!-- ══════════ APLIKASI SAGAGOAL — SEGERA HADIR (shared w/ tentang.php) ══════════ -->
+    <!-- ══════════ APLIKASI ZONASINEMA — SEGERA HADIR (shared w/ tentang.php) ══════════ -->
     <?= wpm_app_promo_section($pdo) ?>
+
+<script>
+(function () {
+    document.querySelectorAll('.poster-slider-wrap').forEach(function (wrap) {
+        var track = wrap.querySelector('.poster-slider');
+        var prevBtn = wrap.querySelector('.poster-slider__arrow--prev');
+        var nextBtn = wrap.querySelector('.poster-slider__arrow--next');
+        if (!track || !prevBtn || !nextBtn) { return; }
+
+        function step() {
+            var card = track.querySelector('.poster-card');
+            var cardWidth = card ? card.getBoundingClientRect().width + 16 : 300;
+            return cardWidth * 2;
+        }
+
+        function updateArrows() {
+            var maxScroll = track.scrollWidth - track.clientWidth;
+            prevBtn.disabled = track.scrollLeft <= 4;
+            nextBtn.disabled = track.scrollLeft >= maxScroll - 4;
+        }
+
+        prevBtn.addEventListener('click', function () {
+            track.scrollBy({ left: -step(), behavior: 'smooth' });
+        });
+        nextBtn.addEventListener('click', function () {
+            track.scrollBy({ left: step(), behavior: 'smooth' });
+        });
+        track.addEventListener('scroll', updateArrows, { passive: true });
+        window.addEventListener('resize', updateArrows);
+        updateArrows();
+    });
+})();
+</script>
 
 </main>
 <?php require __DIR__ . '/includes/site-footer.php'; ?>

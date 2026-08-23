@@ -77,7 +77,7 @@ if ($title === '' && $content === '') {
 }
 
 $defaultSystemPrompt =
-    'You are "Agent SEO" for Sagagoal, a football/soccer livescore and news website. Given an article\'s title, ' .
+    'You are "Agent SEO" for ZonaSinema, a movie review and database website. Given an article\'s title, ' .
     'excerpt, content, and optional editorial notes, generate exactly 5 frequently-asked-questions ' .
     'with clear, concise answers relevant to the article, written in Bahasa Indonesia. ' .
     'Respond with ONLY a raw JSON object, no markdown, no code fences, no commentary, in exactly ' .

@@ -30,9 +30,9 @@ $wpmMenu = wpm_nav_menu($pdo);
 // so the site never shows an empty name/tagline.
 $wpmSiteSettings  = wpm_site_settings($pdo);
 $wpmSiteName      = trim((string) ($wpmSiteSettings['site_name'] ?? '')) !== ''
-    ? (string) $wpmSiteSettings['site_name'] : 'Sagagoal';
+    ? (string) $wpmSiteSettings['site_name'] : 'ZonaSinema';
 $wpmSiteTagline   = trim((string) ($wpmSiteSettings['site_tagline'] ?? '')) !== ''
-    ? (string) $wpmSiteSettings['site_tagline'] : 'Livescore & Berita Bola';
+    ? (string) $wpmSiteSettings['site_tagline'] : 'Review & Database Film';
 $wpmSiteLogoUrl   = wpm_image((string) ($wpmSiteSettings['logo_path'] ?? ''));
 // Dedicated favicon first; fall back to the main site logo so the tab
 // icon still shows the brand even if a separate favicon was never
@@ -74,6 +74,13 @@ $jsVer   = @filemtime($jsPath) ?: 1;
         <link rel="shortcut icon" href="<?= wpm_esc($wpmFaviconUrl) ?>">
         <link rel="apple-touch-icon" href="<?= wpm_esc($wpmFaviconUrl) ?>">
     <?php endif; ?>
+    <!-- PWA (added 20 Aug 2026) — manifest.json/sw.js live at the site
+         root (not a subfolder) so the service worker's scope covers the
+         whole origin; wpm_site_url() (same helper canonical/OG tags use)
+         keeps this correct whether the app is mounted at the domain root
+         (production) or nested under a subfolder (local dev). -->
+    <link rel="manifest" href="<?= wpm_esc(wpm_site_url('manifest.json')) ?>">
+    <meta name="theme-color" content="#fac864">
     <?php if (!empty($canonicalUrl)) : ?>
         <link rel="canonical" href="<?= wpm_esc($canonicalUrl) ?>">
     <?php endif; ?>
@@ -88,7 +95,9 @@ $jsVer   = @filemtime($jsPath) ?: 1;
     <?php endif; ?>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- ZonaSinema redesign (21 Agu 2026) — Bebas Neue (display) + Manrope
+         (body), replacing the old Space Grotesk/Inter sport-theme pair. -->
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="assets/css/site.css?v=<?= (int) $cssVer ?>">
     <?= $extraHead ?? '' ?>
 
@@ -113,44 +122,67 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <body class="crypto-theme">
 <div class="crypto-bg" aria-hidden="true"></div>
 
-<header class="crypto-nav">
-    <div class="crypto-nav__inner">
-        <a href="<?= wpm_esc(wpm_site_url('')) ?>" class="crypto-logo">
-            <?php if ($wpmSiteLogoUrl !== null && $wpmSiteLogoUrl !== '') : ?>
-                <img class="crypto-logo__mark crypto-logo__mark--img" src="<?= wpm_esc($wpmSiteLogoUrl) ?>" alt="<?= wpm_esc($wpmSiteName) ?> logo">
-            <?php else : ?>
-                <span class="crypto-logo__mark" aria-hidden="true">SG</span>
-            <?php endif; ?>
-            <span>
-                <span class="crypto-logo__text"><?= wpm_esc($wpmSiteName) ?></span>
-                <span class="crypto-logo__tag"><?= wpm_esc($wpmSiteTagline) ?></span>
-            </span>
-        </a>
+<header class="zc-nav">
+    <div class="crypto-nav__inner zc-nav__inner">
+        <div class="zc-nav__left">
+            <!-- Logo permanen/hardcode (24 Agu 2026, keputusan final operator) —
+                 BUKAN lagi dari site_settings.logo_path, murni file di
+                 assets/img/branding/. Nol teks/tagline terpisah, logo doang. -->
+            <a href="<?= wpm_esc(wpm_site_url('')) ?>" class="crypto-logo">
+                <img class="crypto-logo__mark crypto-logo__mark--wide" src="<?= wpm_esc(wpm_site_url('assets/img/branding/logo-zonasinema-white-transparent.png')) ?>" alt="ZonaSinema">
+            </a>
 
-        <nav aria-label="Menu utama">
-            <ul class="crypto-nav__menu">
-                <?php foreach ($wpmMenu as $item) : ?>
-                    <li><a href="<?= wpm_esc($item['href']) ?>" class="<?= $activeNav === $item['id'] ? 'is-active' : '' ?>"><?= wpm_esc($item['label']) ?></a></li>
-                <?php endforeach; ?>
-            </ul>
-        </nav>
+            <form class="zc-search" method="get" action="<?= wpm_esc(wpm_url_pencarian()) ?>">
+                <?= wpm_icon('search') ?>
+                <input type="text" name="q" class="zc-search__input" placeholder="Cari judul film...">
+                <button type="submit" class="zc-search__btn" aria-label="Cari"><?= wpm_icon('search') ?></button>
+            </form>
+        </div>
 
-        <div class="crypto-nav__actions">
-            <a class="crypto-nav__search-btn" href="<?= wpm_esc(wpm_url_pencarian()) ?>" aria-label="Cari"><?= wpm_icon('search') ?></a>
-            <label class="theme-toggle" for="theme-toggle-input">
-                <span class="theme-toggle__icon"><?= wpm_icon('moon') ?></span>
-                <span class="theme-toggle__label u-hide-mobile">Mode Gelap</span>
-                <span class="theme-toggle__switch">
-                    <input type="checkbox" id="theme-toggle-input" class="theme-toggle__input" aria-label="Mode Gelap">
-                    <span class="theme-toggle__track"><span class="theme-toggle__thumb"></span></span>
-                </span>
-            </label>
+        <div class="zc-nav__right">
+            <nav class="zc-nav-links" aria-label="Menu utama">
+                <a href="<?= wpm_esc(wpm_url_kategori()) ?>" class="<?= $activeNav === 'berita' ? 'is-active' : '' ?>">Genre
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M6 9l6 6 6-6"/></svg>
+                </a>
+                <a href="<?= wpm_esc(wpm_url_kategori()) ?>">Populer</a>
+                <a href="<?= wpm_esc(wpm_url_kategori()) ?>">Tahun Rilis
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M6 9l6 6 6-6"/></svg>
+                </a>
+                <!-- Ganti dari toggle Mode Gelap (24 Agu 2026, brief
+                     GANTI-DARKMODE-KE-REQUEST-MOVIE) — tema gelap/terang
+                     tetap jalan otomatis (localStorage/prefers-color-scheme,
+                     lihat <script> di <head>), cuma kontrol manual switch-nya
+                     yang dicabut, slotnya diganti link fitur ini. -->
+                <a href="request-film.php" class="nav-link--request<?= ($activeNav ?? '') === 'request-film' ? ' is-active' : '' ?>">
+                    <?= wpm_icon('film') ?>
+                    <span>Request Movie</span>
+                </a>
+            </nav>
             <button type="button" class="crypto-nav__toggle" id="crypto-nav-toggle" aria-label="Buka menu">
                 <span></span>
             </button>
         </div>
     </div>
 </header>
+
+<!-- Genre bar — wired ke tabel films/film_genres (23 Agu 2026). Tiap link
+     genre/tahun/terpopuler sekarang beneran filter berbeda di kategori.php,
+     bukan semua ke halaman yang sama lagi. -->
+<?php $wpmGenreBarActive = trim((string) ($_GET['genre'] ?? '')); ?>
+<div class="zc-genre-bar">
+    <a href="kategori.php" class="<?= $wpmGenreBarActive === '' && !isset($_GET['year']) && !isset($_GET['popular']) ? 'is-active' : '' ?>">Semua</a>
+    <a href="kategori.php?genre=aksi" class="<?= $wpmGenreBarActive === 'aksi' ? 'is-active' : '' ?>">Aksi</a>
+    <a href="kategori.php?genre=horror" class="<?= $wpmGenreBarActive === 'horror' ? 'is-active' : '' ?>">Horror</a>
+    <a href="kategori.php?genre=komedi" class="<?= $wpmGenreBarActive === 'komedi' ? 'is-active' : '' ?>">Komedi</a>
+    <a href="kategori.php?genre=sci-fi" class="<?= $wpmGenreBarActive === 'sci-fi' ? 'is-active' : '' ?>">Sci-Fi</a>
+    <a href="kategori.php?genre=romansa" class="<?= $wpmGenreBarActive === 'romansa' ? 'is-active' : '' ?>">Romansa</a>
+    <a href="kategori.php?genre=drama" class="<?= $wpmGenreBarActive === 'drama' ? 'is-active' : '' ?>">Drama</a>
+    <a href="kategori.php?genre=animasi" class="<?= $wpmGenreBarActive === 'animasi' ? 'is-active' : '' ?>">Animasi</a>
+    <a href="kategori.php?genre=thriller" class="<?= $wpmGenreBarActive === 'thriller' ? 'is-active' : '' ?>">Thriller</a>
+    <a href="kategori.php?year=2025" class="<?= ($_GET['year'] ?? '') === '2025' ? 'is-active' : '' ?>">2025</a>
+    <a href="kategori.php?year=2026" class="<?= ($_GET['year'] ?? '') === '2026' ? 'is-active' : '' ?>">2026</a>
+    <a href="kategori.php?popular=1" class="<?= isset($_GET['popular']) ? 'is-active' : '' ?>">Terpopuler</a>
+</div>
 
 <?php
 $wpmBreakingNewsHtml = wpm_breaking_news_markup($pdo);

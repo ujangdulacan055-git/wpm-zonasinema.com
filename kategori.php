@@ -16,14 +16,59 @@ require_once __DIR__ . '/includes/site-bootstrap.php';
 $categorySlug = trim((string) ($_GET['slug'] ?? ''));
 $tagSlug = trim((string) ($_GET['tag'] ?? ''));
 $leagueId = (int) ($_GET['league'] ?? 0);
+$genreSlug = trim((string) ($_GET['genre'] ?? ''));
+$filmYear = trim((string) ($_GET['year'] ?? ''));
+$filmPopular = isset($_GET['popular']);
 $page = max(1, (int) ($_GET['page'] ?? 1));
-$perPage = 9;
+$perPage = 50; // 24 Agu 2026: naik dari 9 -> 50, biar "Semua Film" (35 film
+                // sekarang) muat 1 halaman tanpa pagination gak perlu.
 
 $category = null;
 $tag = null;
 $league = null;
+$genre = null;
 $where = "p.status = 'published'";
 $params = [];
+
+/* ── Mode genre/tahun/terpopuler (23 Agu 2026) — filter beneran ke tabel
+ * films/film_genres, dipakai genre bar di includes/site-header.php. Beda
+ * dari mode kategori/tag/league di atas (yang query article_categories/
+ * article_tags/leagues) — sengaja dipisah karena films JOIN pages, bukan
+ * kolom pages langsung. ──
+ *
+ * Selalu true (24 Agu 2026, fix bug) — ZonaSinema 100% film sekarang,
+ * gak ada lagi mode "artikel biasa". Sebelumnya cuma true kalau ada
+ * genre/tahun/populer aktif, jadi "Semua Film" (tanpa filter) masih
+ * kepeleset render pakai wpm_article_card() (kartu blog "BERITA") bukan
+ * poster grid. Efek ke $where (baris di bawah, restrict ke page_id yang
+ * ada row-nya di `films`) sengaja ikut selalu aktif juga — itu benar,
+ * bukan cuma efek samping: "Semua Film" memang harus cuma nampilin
+ * halaman yang beneran film, bukan sisa artikel non-film apapun. Genre/
+ * tahun spesifik tetap kondisional di bawah (masih cek $genreSlug/
+ * $filmYear masing-masing). */
+$isFilmFilterMode = true;
+if ($isFilmFilterMode) {
+    $where .= ' AND p.page_id IN (SELECT page_id FROM films)';
+    if ($genreSlug !== '') {
+        $genreStmt = $pdo->prepare('SELECT * FROM film_genres WHERE slug = :slug LIMIT 1');
+        $genreStmt->execute(['slug' => $genreSlug]);
+        $genre = $genreStmt->fetch() ?: null;
+        if ($genre === null) {
+            http_response_code(404);
+        } else {
+            $where .= ' AND p.page_id IN (
+                SELECT f.page_id FROM films f
+                JOIN film_genre_map fgm ON fgm.film_id = f.id
+                WHERE fgm.genre_id = :genreId
+            )';
+            $params['genreId'] = (int) $genre['id'];
+        }
+    }
+    if ($filmYear !== '' && ctype_digit($filmYear)) {
+        $where .= ' AND p.page_id IN (SELECT page_id FROM films WHERE YEAR(release_date) = :filmYear)';
+        $params['filmYear'] = (int) $filmYear;
+    }
+}
 
 if ($categorySlug !== '') {
     $catStmt = $pdo->prepare('SELECT * FROM article_categories WHERE slug = :slug LIMIT 1');
@@ -64,12 +109,17 @@ $totalPages = max(1, (int) ceil($totalArticles / $perPage));
 $page = min($page, $totalPages);
 $offset = ($page - 1) * $perPage;
 
+$orderBy = ($isFilmFilterMode && $filmPopular)
+    ? '(SELECT f.popularity FROM films f WHERE f.page_id = p.page_id) DESC'
+    : 'p.published_at DESC';
+
 $listStmt = $pdo->prepare(
-    "SELECT p.*, c.name AS category_name, c.slug AS category_slug
+    "SELECT p.*, c.name AS category_name, c.slug AS category_slug, f.vote_average
      FROM pages p
      LEFT JOIN article_categories c ON c.id = p.category_id
+     LEFT JOIN films f ON f.page_id = p.page_id
      WHERE $where
-     ORDER BY p.published_at DESC
+     ORDER BY $orderBy
      LIMIT $perPage OFFSET $offset"
 );
 $listStmt->execute($params);
@@ -87,35 +137,59 @@ try {
     $allCategories = [];
 }
 
-$paginateUrl = static function (int $p) use ($categorySlug, $tagSlug, $leagueId): string {
+$paginateUrl = static function (int $p) use ($categorySlug, $tagSlug, $leagueId, $genreSlug, $filmYear, $filmPopular): string {
     if ($tagSlug !== '') {
         return wpm_url_tag($tagSlug) . '?page=' . $p;
     }
     if ($leagueId > 0) {
         return wpm_url_kategori() . '?league=' . $leagueId . '&page=' . $p;
     }
+    if ($genreSlug !== '') {
+        return 'kategori.php?genre=' . rawurlencode($genreSlug) . '&page=' . $p;
+    }
+    if ($filmYear !== '') {
+        return 'kategori.php?year=' . rawurlencode($filmYear) . '&page=' . $p;
+    }
+    if ($filmPopular) {
+        return 'kategori.php?popular=1&page=' . $p;
+    }
     return wpm_url_kategori($categorySlug !== '' ? $categorySlug : null) . '?page=' . $p;
 };
 
-if ($category !== null) {
-    $pageTitle = 'Berita ' . $category['name'] . ' — Sagagoal';
-    $pageDescription = 'Kumpulan berita dan artikel kategori ' . $category['name'] . ' di Sagagoal.';
+if ($genre !== null) {
+    $pageTitle = 'Film ' . $genre['label_id'] . ' — ZonaSinema';
+    $pageDescription = 'Kumpulan review dan database film genre ' . $genre['label_id'] . ' di ZonaSinema.';
+    $heroTitle = 'Film ' . $genre['label_id'];
+    $heroSubtitle = 'Kumpulan film genre ' . $genre['label_id'] . '.';
+} elseif ($filmYear !== '') {
+    $pageTitle = 'Film Rilis ' . $filmYear . ' — ZonaSinema';
+    $pageDescription = 'Kumpulan film yang rilis tahun ' . $filmYear . ' di ZonaSinema.';
+    $heroTitle = 'Film Rilis ' . $filmYear;
+    $heroSubtitle = 'Kumpulan film dengan tahun rilis ' . $filmYear . '.';
+} elseif ($filmPopular) {
+    $pageTitle = 'Film Terpopuler — ZonaSinema';
+    $pageDescription = 'Film paling populer menurut data TMDb di ZonaSinema.';
+    $heroTitle = 'Film Terpopuler';
+    $heroSubtitle = 'Diurutkan berdasar popularitas.';
+} elseif ($category !== null) {
+    $pageTitle = 'Berita ' . $category['name'] . ' — ZonaSinema';
+    $pageDescription = 'Kumpulan berita dan artikel kategori ' . $category['name'] . ' di ZonaSinema.';
     $heroTitle = $category['name'];
     $heroSubtitle = 'Kumpulan berita & artikel kategori ini.';
 } elseif ($tag !== null) {
-    $pageTitle = 'Tag: ' . $tag['name'] . ' — Sagagoal';
-    $pageDescription = 'Kumpulan artikel dengan tag ' . $tag['name'] . ' di Sagagoal.';
+    $pageTitle = 'Tag: ' . $tag['name'] . ' — ZonaSinema';
+    $pageDescription = 'Kumpulan artikel dengan tag ' . $tag['name'] . ' di ZonaSinema.';
     $heroTitle = '#' . $tag['name'];
     $heroSubtitle = 'Artikel dengan tag ini.';
 } elseif ($league !== null) {
-    $pageTitle = 'Berita ' . $league['name'] . ' — Sagagoal';
-    $pageDescription = 'Kumpulan berita seputar ' . $league['name'] . ' di Sagagoal.';
+    $pageTitle = 'Berita ' . $league['name'] . ' — ZonaSinema';
+    $pageDescription = 'Kumpulan berita seputar ' . $league['name'] . ' di ZonaSinema.';
     $heroTitle = $league['name'];
     $heroSubtitle = 'Kumpulan berita terkait liga ini.';
 } else {
-    $pageTitle = 'Semua Berita — Sagagoal';
-    $pageDescription = 'Kumpulan seluruh berita sepak bola, jadwal pertandingan, dan live score dari Sagagoal.';
-    $heroTitle = 'Semua Berita';
+    $pageTitle = 'Semua Film — ZonaSinema';
+    $pageDescription = 'Kumpulan seluruh review dan artikel film dari ZonaSinema.';
+    $heroTitle = 'Semua Film';
     $heroSubtitle = 'Kumpulan seluruh artikel yang sudah diterbitkan.';
 }
 $activeNav = 'berita';
@@ -139,17 +213,17 @@ require __DIR__ . '/includes/site-header.php';
 <section class="page-hero">
     <div class="crypto-container">
         <nav class="breadcrumb" aria-label="Breadcrumb">
-            <a href="<?= wpm_esc(wpm_site_url('')) ?>">Beranda</a> <span>/</span> <a href="<?= wpm_esc(wpm_url_kategori()) ?>">Berita</a>
+            <a href="<?= wpm_esc(wpm_site_url('')) ?>">Beranda</a> <span>/</span> <a href="<?= wpm_esc(wpm_url_kategori()) ?>">Film</a>
             <?php if ($category !== null) : ?><span>/</span> <?= wpm_esc($category['name']) ?><?php endif; ?>
             <?php if ($league !== null) : ?><span>/</span> <?= wpm_esc($league['name']) ?><?php endif; ?>
         </nav>
-        <span class="section-kicker">Berita</span>
+        <span class="section-kicker"><?= $isFilmFilterMode ? 'Film' : 'Berita' ?></span>
         <h1><?= wpm_esc($heroTitle) ?></h1>
-        <p><?= wpm_esc(strip_tags($heroSubtitle)) ?> <?= wpm_esc((string) $totalArticles) ?> artikel.</p>
+        <p><?= wpm_esc(strip_tags($heroSubtitle)) ?> <?= wpm_esc((string) $totalArticles) ?> <?= $isFilmFilterMode ? 'film' : 'artikel' ?>.</p>
     </div>
 </section>
 
-<?php if ($allCategories !== []) : ?>
+<?php if (!$isFilmFilterMode && $allCategories !== []) : ?>
 <div class="crypto-container" style="margin-bottom:8px;">
     <div style="display:flex;gap:10px;flex-wrap:wrap;">
         <a class="crypto-btn crypto-btn--ghost" style="padding:8px 16px;font-size:13px;<?= $category === null && $tag === null ? 'background:var(--grad-brand);color:#fff;' : '' ?>" href="<?= wpm_esc(wpm_url_kategori()) ?>">Semua</a>
@@ -171,9 +245,9 @@ require __DIR__ . '/includes/site-header.php';
                     $betweenCardsAdHtml = wpm_render_ad_slot($pdo, 'between-article-cards', 'category', $category['id'] ?? null);
                     $adInsertAfter = min(5, count($articles) - 1);
                     ?>
-                    <div class="crypto-grid crypto-grid--3">
+                    <div class="<?= $isFilmFilterMode ? 'poster-grid' : 'crypto-grid crypto-grid--3' ?>">
                         <?php foreach ($articles as $i => $article) : ?>
-                            <?= wpm_article_card($article) ?>
+                            <?= $isFilmFilterMode ? wpm_poster_card($article) : wpm_article_card($article) ?>
                             <?php if ($betweenCardsAdHtml !== '' && $i === $adInsertAfter) : ?>
                                 <div class="news-grid__ad"><?= $betweenCardsAdHtml ?></div>
                             <?php endif; ?>

@@ -40,8 +40,8 @@ if (mb_strlen($query) >= 2) {
     $articles = $listStmt->fetchAll();
 }
 
-$pageTitle = $query !== '' ? 'Hasil Pencarian: ' . $query . ' — Sagagoal' : 'Pencarian — Sagagoal';
-$pageDescription = 'Cari berita bola, jadwal pertandingan, dan artikel di Sagagoal.';
+$pageTitle = $query !== '' ? 'Hasil Pencarian: ' . $query . ' — ZonaSinema' : 'Pencarian — ZonaSinema';
+$pageDescription = 'Cari review, artikel, dan database film di ZonaSinema.';
 $activeNav = '';
 $canonicalUrl = wpm_site_url(wpm_url_pencarian());
 

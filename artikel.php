@@ -31,7 +31,7 @@ $article = $stmt->fetch();
 
 if (!$article) {
     http_response_code(404);
-    $pageTitle = 'Artikel Tidak Ditemukan — Sagagoal';
+    $pageTitle = 'Artikel Tidak Ditemukan — ZonaSinema';
     $pageDescription = 'Artikel yang kamu cari tidak ditemukan atau belum diterbitkan.';
     $activeNav = 'berita';
     require __DIR__ . '/includes/site-header.php';
@@ -67,9 +67,10 @@ $tags = $tagStmt->fetchAll();
 $related = [];
 if (!empty($article['category_id'])) {
     $relStmt = $pdo->prepare(
-        "SELECT p.*, c.name AS category_name
+        "SELECT p.*, c.name AS category_name, f.vote_average
          FROM pages p
          LEFT JOIN article_categories c ON c.id = p.category_id
+         LEFT JOIN films f ON f.page_id = p.page_id
          WHERE p.status = 'published' AND p.category_id = :cat AND p.page_id != :id
          ORDER BY p.published_at DESC LIMIT 4"
     );
@@ -81,9 +82,10 @@ if (count($related) < 4) {
     $excludeIds = array_merge([$pageId], array_column($related, 'page_id'));
     $placeholders = implode(',', array_fill(0, count($excludeIds), '?'));
     $fallStmt = $pdo->prepare(
-        "SELECT p.*, c.name AS category_name
+        "SELECT p.*, c.name AS category_name, f.vote_average
          FROM pages p
          LEFT JOIN article_categories c ON c.id = p.category_id
+         LEFT JOIN films f ON f.page_id = p.page_id
          WHERE p.status = 'published' AND p.page_id NOT IN ($placeholders)
          ORDER BY p.published_at DESC LIMIT $need"
     );
@@ -111,7 +113,7 @@ if (is_array($faqDecoded)) {
     }
 }
 
-$pageTitle = !empty($article['meta_title']) ? (string) $article['meta_title'] : (string) $article['title'] . ' — Sagagoal';
+$pageTitle = !empty($article['meta_title']) ? (string) $article['meta_title'] : (string) $article['title'] . ' — ZonaSinema';
 $pageDescription = !empty($article['meta_description']) ? (string) $article['meta_description'] : wpm_excerpt((string) ($article['excerpt'] ?: $article['content']), 160);
 $activeNav = 'berita';
 $canonicalUrl = !empty($article['canonical_url']) ? (string) $article['canonical_url'] : wpm_site_url(wpm_url_artikel($slug));
@@ -150,7 +152,7 @@ $wpmIso8601 = static function (?string $value): ?string {
 
 $schemaSiteSettings = wpm_site_settings($pdo);
 $schemaSiteName = trim((string) ($schemaSiteSettings['site_name'] ?? '')) !== ''
-    ? (string) $schemaSiteSettings['site_name'] : 'Sagagoal';
+    ? (string) $schemaSiteSettings['site_name'] : 'ZonaSinema';
 $schemaLogoUrl = wpm_image((string) ($schemaSiteSettings['logo_path'] ?? ''));
 if ($schemaLogoUrl !== null) {
     $schemaLogoUrl = wpm_site_url(ltrim($schemaLogoUrl, '/'));
@@ -218,24 +220,177 @@ $articleBanners = wpm_banners_active($pdo, 'article');
  * querying/counting the impression twice. When a slot comes back empty the
  * <aside> for it is skipped entirely (not just hidden) so the grid column
  * it would have occupied is never reserved — see .article-layout's
- * variant classes in site.css for the column-count logic this drives. */
+ * variant classes in site.css for the column-count logic this drives.
+ *
+ * 21 Agu 2026 (film detail redesign): the RIGHT sidebar now always renders
+ * regardless of $hasRightAd — it carries the "Info Film" + "Jadwal Tayang
+ * Bioskop" cards (dummy, see placeholders below), with the ad (if any)
+ * appended inside it. Only the LEFT sidebar still fully disappears when
+ * there's no ad for it, same as before. */
 $leftAdHtml = wpm_render_ad_slot($pdo, 'sidebar-left', 'article', $pageId);
 $rightAdHtml = wpm_render_ad_slot($pdo, 'sidebar-right', 'article', $pageId);
 $hasLeftAd = $leftAdHtml !== '';
 $hasRightAd = $rightAdHtml !== '';
 $articleLayoutClass = 'article-layout';
-if ($hasLeftAd && $hasRightAd) {
-    $articleLayoutClass .= ' article-layout--both';
-} elseif ($hasRightAd) {
-    $articleLayoutClass .= ' article-layout--right-only';
-} elseif ($hasLeftAd) {
-    $articleLayoutClass .= ' article-layout--left-only';
-} else {
-    $articleLayoutClass .= ' article-layout--no-ads';
+$articleLayoutClass .= $hasLeftAd ? ' article-layout--both' : ' article-layout--right-only';
+
+/* ── Film metadata placeholders (dummy) ──────────────────────────────────
+ * Situs ini belum punya tabel `films` terpisah — skema database film
+ * di-hold, dibahas terpisah nanti (lihat docs/ROADMAP.md). Rating, genre,
+ * cast, dan crew sekarang diambil dari tabel `films` (JOIN by page_id,
+ * diisi via import TMDb 23 Agu 2026) — lihat docs/BRIEF-INTEGRASI-TMDB-SKEMA-FILM.md.
+ * Kalau sebuah artikel BUKAN film (belum/nggak punya row di `films`,
+ * misal artikel lama), semua fact ini fallback ke placeholder netral,
+ * BUKAN di-fabricate. Jadwal tayang bioskop TETAP placeholder — TMDb
+ * nggak nyediain data jadwal bioskop Indonesia (di luar scope API ini). */
+$filmStmt = $pdo->prepare('SELECT * FROM films WHERE page_id = :id LIMIT 1');
+$filmStmt->execute(['id' => $pageId]);
+$film = $filmStmt->fetch() ?: null;
+
+$filmGenreRows = [];
+if ($film !== null) {
+    $fgStmt = $pdo->prepare(
+        'SELECT fg.label_id FROM film_genre_map fgm
+         JOIN film_genres fg ON fg.id = fgm.genre_id
+         WHERE fgm.film_id = :filmId ORDER BY fg.label_id ASC'
+    );
+    $fgStmt->execute(['filmId' => (int) $film['id']]);
+    $filmGenreRows = $fgStmt->fetchAll(PDO::FETCH_COLUMN);
 }
+$filmDummyGenres = $filmGenreRows !== [] ? $filmGenreRows : ['Umum'];
+
+$filmDummyRating = $film !== null && $film['vote_average'] !== null ? (float) $film['vote_average'] : null;
+$filmDummyRatingCount = $film !== null && $film['vote_count'] !== null ? (int) $film['vote_count'] : null;
+$filmDummyAgeRating = null; // TMDb basic endpoints nggak nyediain age rating Indonesia — badge ini disembunyikan kalau null, bukan di-fabricate
+$filmDummyDuration = $film !== null && $film['runtime_minutes'] !== null ? ((int) $film['runtime_minutes'] . ' menit') : null;
+
+$filmCrew = [];
+if ($film !== null) {
+    $decodedCrew = json_decode((string) $film['crew_json'], true);
+    $filmCrew = is_array($decodedCrew) ? $decodedCrew : [];
+}
+$filmDummyDirector = null;
+foreach ($filmCrew as $c) {
+    if (($c['role'] ?? '') === 'Sutradara') {
+        $filmDummyDirector = (string) $c['name'];
+        break;
+    }
+}
+$filmDummyWriter = null; // nggak ditarik dari TMDb credits di skema import ini — baris "Penulis Naskah" disembunyikan kalau null
+$filmDummyStudio = null; // production_companies nggak ditarik di skema import ini — baris "Studio" disembunyikan kalau null
+
+$filmDummyCast = [];
+if ($film !== null) {
+    $decodedCast = json_decode((string) $film['cast_json'], true);
+    if (is_array($decodedCast)) {
+        foreach ($decodedCast as $c) {
+            $character = trim((string) ($c['character'] ?? ''));
+            $filmDummyCast[] = ['name' => (string) $c['name'], 'role' => $character !== '' ? 'sebagai ' . $character : 'Pemeran'];
+        }
+    }
+    if ($filmDummyDirector !== null) {
+        $filmDummyCast[] = ['name' => $filmDummyDirector, 'role' => 'Sutradara'];
+    }
+}
+
+// Jadwal tayang bioskop — TMDb nggak nyediain data ini (di luar scope API),
+// sengaja dikosongin, jangan fabricate nama bioskop/jam tayang.
+$filmDummyCinemas = [];
+
+// Trailer — link-out YouTube doang (BUKAN embed/iframe), dari trailer_youtube_key
+// hasil import TMDb. Fallback "#" kalau film ini nggak punya trailer key.
+$filmTrailerUrl = ($film !== null && !empty($film['trailer_youtube_key']))
+    ? 'https://www.youtube.com/watch?v=' . rawurlencode((string) $film['trailer_youtube_key'])
+    : '#';
+
+/** Inisial 1-2 huruf dari nama, buat avatar bulat dummy cast & crew. */
+$wpmInitials = static function (string $name): string {
+    $parts = preg_split('/\s+/', trim($name)) ?: [];
+    $initials = '';
+    foreach (array_slice($parts, 0, 2) as $part) {
+        $initials .= mb_strtoupper(mb_substr($part, 0, 1));
+    }
+    return $initials;
+};
+
+$filmHeroImg = wpm_image($article['featured_image'] ?? null);
+// Prioritaskan films.release_date (tanggal rilis film beneran dari TMDb)
+// di atas pages.published_at (tanggal artikel ini diterbitkan) — dua hal
+// yang beda; fallback ke published_at cuma buat artikel non-film lama.
+$filmReleaseSource = ($film !== null && $film['release_date'] !== null) ? $film['release_date'] : ($article['published_at'] ?? null);
+$filmYear = wpm_format_date($filmReleaseSource, 'Y');
+$filmReleaseDisplay = wpm_format_date($filmReleaseSource, 'd F Y');
+$filmSummary = wpm_excerpt((string) ($article['excerpt'] ?: $article['content']), 220);
 
 require __DIR__ . '/includes/site-header.php';
 ?>
+
+<!-- Hero film: backdrop blur pakai featured_image artikel (bukan field khusus).
+     Rating/genre/durasi/sutradara/rilis dari tabel films (JOIN by page_id) —
+     lihat blok query di atas. Elemen disembunyikan (bukan di-fabricate)
+     kalau field-nya null (artikel non-film, atau film tanpa data lengkap). -->
+<section class="film-hero">
+    <?php if ($filmHeroImg !== null) : ?>
+        <div class="film-hero__backdrop" style="background-image:url('<?= wpm_esc($filmHeroImg) ?>');"></div>
+    <?php endif; ?>
+    <div class="film-hero__scrim"></div>
+    <div class="film-hero__inner crypto-container">
+        <div class="film-hero__poster">
+            <?php if ($filmHeroImg !== null) : ?>
+                <img src="<?= wpm_esc($filmHeroImg) ?>" alt="<?= wpm_esc((string) $article['title']) ?>">
+            <?php else : ?>
+                <?= wpm_icon('news') ?>
+            <?php endif; ?>
+        </div>
+        <div class="film-hero__meta">
+            <div class="film-hero__badges">
+                <?php if ($filmDummyAgeRating !== null) : ?>
+                    <span class="film-hero__age"><?= wpm_esc($filmDummyAgeRating) ?></span>
+                <?php endif; ?>
+                <span class="film-hero__note">Tayang di Bioskop<?= $filmYear !== '' ? ' · ' . wpm_esc($filmYear) : '' ?></span>
+            </div>
+            <h1><?= wpm_esc((string) $article['title']) ?></h1>
+
+            <div class="film-hero__facts">
+                <?php if ($filmDummyRating !== null) : ?>
+                <div class="film-hero__rating">
+                    <div class="film-hero__rating-circle"><span><?= wpm_esc(number_format($filmDummyRating, 1)) ?></span></div>
+                    <div>
+                        <div class="film-hero__rating-label">Skor TMDb</div>
+                        <div class="film-hero__rating-count"><?= $filmDummyRatingCount !== null ? 'berdasar ' . (int) $filmDummyRatingCount . ' vote' : '' ?></div>
+                    </div>
+                </div>
+                <span class="film-hero__fact-divider"></span>
+                <?php endif; ?>
+                <?php if ($filmDummyDirector !== null) : ?>
+                    <div class="film-hero__fact"><span>Sutradara</span><strong><?= wpm_esc($filmDummyDirector) ?></strong></div>
+                <?php endif; ?>
+                <?php if ($filmDummyDuration !== null) : ?>
+                    <div class="film-hero__fact"><span>Durasi</span><strong><?= wpm_esc($filmDummyDuration) ?></strong></div>
+                <?php endif; ?>
+                <?php if ($filmReleaseDisplay !== '') : ?>
+                    <div class="film-hero__fact"><span>Rilis</span><strong><?= wpm_esc($filmReleaseDisplay) ?></strong></div>
+                <?php endif; ?>
+            </div>
+
+            <?php if ($filmSummary !== '') : ?>
+                <p class="film-hero__summary"><?= wpm_esc($filmSummary) ?></p>
+            <?php endif; ?>
+
+            <div class="film-hero__badges">
+                <?php foreach ($filmDummyGenres as $genreLabel) : ?>
+                    <span class="genre-pill"><?= wpm_esc($genreLabel) ?></span>
+                <?php endforeach; ?>
+            </div>
+
+            <!-- Link-out doang ke YouTube — BUKAN embed/player. Nol iframe/streaming di halaman ini. -->
+            <a href="<?= wpm_esc($filmTrailerUrl) ?>" target="_blank" rel="noopener" class="btn-trailer">
+                <svg viewBox="0 0 24 24" fill="currentColor" width="15" height="15"><path d="M8 5v14l11-7L8 5Z"/></svg>
+                Tonton Trailer di YouTube
+            </a>
+        </div>
+    </div>
+</section>
 
 <section class="crypto-section--tight">
     <div class="crypto-container">
@@ -255,31 +410,40 @@ require __DIR__ . '/includes/site-header.php';
             </aside>
             <?php endif; ?>
 
-            <div class="article-layout__main">
+            <div class="article-layout__main film-body">
                 <?= wpm_render_ad_slot($pdo, 'article-before-title', 'article', $pageId) ?>
 
-                <div class="article-head">
+                <div class="article-head__meta film-body__byline">
                     <?php if (!empty($article['category_name'])) : ?>
                         <a href="<?= wpm_esc(wpm_url_kategori((string) $article['category_slug'])) ?>" class="article-head__category"><?= wpm_esc((string) $article['category_name']) ?></a>
                     <?php endif; ?>
-                    <h1><?= wpm_esc((string) $article['title']) ?></h1>
-                    <div class="article-head__meta">
-                        <?php if (!empty($article['author_name'])) : ?><span><?= wpm_icon('news') ?><?= wpm_esc((string) $article['author_name']) ?></span><?php endif; ?>
-                        <span><?= wpm_icon('clock') ?><?= wpm_esc(wpm_format_date($article['published_at'] ?? null, 'd M Y, H:i')) ?></span>
-                        <span><?= wpm_icon('eye') ?><?= (int) $article['views'] ?> views</span>
-                    </div>
+                    <?php if (!empty($article['author_name'])) : ?><span><?= wpm_icon('news') ?><?= wpm_esc((string) $article['author_name']) ?></span><?php endif; ?>
+                    <span><?= wpm_icon('clock') ?><?= wpm_esc(wpm_format_date($article['published_at'] ?? null, 'd M Y, H:i')) ?></span>
+                    <span><?= wpm_icon('eye') ?><?= (int) $article['views'] ?> views</span>
                 </div>
 
                 <?= wpm_render_ad_slot($pdo, 'article-after-title', 'article', $pageId) ?>
-
-                <?php if (($img = wpm_image($article['featured_image'] ?? null)) !== null) : ?>
-                    <div class="article-cover"><img src="<?= wpm_esc($img) ?>" alt="<?= wpm_esc((string) $article['title']) ?>"></div>
-                <?php endif; ?>
-
                 <?= wpm_render_ad_slot($pdo, 'above-article', 'article', $pageId) ?>
 
-                <div class="article-prose">
-                    <?= wpm_inject_midpoint((string) $article['content'], wpm_render_ad_slot($pdo, 'middle-of-article', 'article', $pageId)) ?>
+                <div class="film-section film-synopsis">
+                    <h2>Sinopsis</h2>
+                    <div class="article-prose">
+                        <?= wpm_inject_midpoint((string) $article['content'], wpm_render_ad_slot($pdo, 'middle-of-article', 'article', $pageId)) ?>
+                    </div>
+                </div>
+
+                <!-- Cast & Crew — dari films.cast_json/crew_json (TMDb), lihat blok query di atas -->
+                <div class="film-section">
+                    <h2>Pemeran &amp; Kru</h2>
+                    <div class="cast-grid">
+                        <?php foreach ($filmDummyCast as $castMember) : ?>
+                            <div class="cast-item">
+                                <div class="cast-item__avatar"><span><?= wpm_esc($wpmInitials((string) $castMember['name'])) ?></span></div>
+                                <div class="cast-item__name"><?= wpm_esc((string) $castMember['name']) ?></div>
+                                <div class="cast-item__role"><?= wpm_esc((string) $castMember['role']) ?></div>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
                 </div>
 
                 <?= wpm_render_ad_slot($pdo, 'below-article', 'article', $pageId) ?>
@@ -332,23 +496,72 @@ require __DIR__ . '/includes/site-header.php';
                 <?php endif; ?>
 
                 <?php if ($related !== []) : ?>
-                <div class="related-articles">
-                    <h2>Artikel Terkait</h2>
-                    <div class="crypto-grid crypto-grid--2">
+                <div class="film-section related-articles">
+                    <h2>Film Terkait</h2>
+                    <div class="poster-slider">
                         <?php foreach ($related as $rel) : ?>
-                            <?= wpm_article_card($rel, true) ?>
+                            <?= wpm_poster_card($rel) ?>
                         <?php endforeach; ?>
                     </div>
                 </div>
                 <?php endif; ?>
             </div>
 
-            <?php if ($hasRightAd) : ?>
-            <!-- Sticky sidebar ad (right) -->
+            <!-- Sidebar kanan: Info Film (data films/TMDb) + Jadwal Tayang Bioskop
+                 (placeholder, TMDb nggak nyediain data ini) selalu tampil; ad slot
+                 (kalau aktif) ikut di sini juga. -->
             <aside class="article-layout__sidebar">
-                <?= $rightAdHtml ?>
+                <div class="sidebar-block">
+                    <h3>Info Film</h3>
+                    <div class="sidebar-block__rows">
+                        <?php if ($filmDummyDirector !== null) : ?>
+                            <div class="sidebar-block__row"><span>Sutradara</span><strong><?= wpm_esc($filmDummyDirector) ?></strong></div>
+                        <?php endif; ?>
+                        <?php if ($filmDummyWriter !== null) : ?>
+                            <div class="sidebar-block__row"><span>Penulis Naskah</span><strong><?= wpm_esc($filmDummyWriter) ?></strong></div>
+                        <?php endif; ?>
+                        <?php if ($filmDummyStudio !== null) : ?>
+                            <div class="sidebar-block__row"><span>Studio</span><strong><?= wpm_esc($filmDummyStudio) ?></strong></div>
+                        <?php endif; ?>
+                        <div class="sidebar-block__row"><span>Genre</span><strong><?= wpm_esc(implode(', ', $filmDummyGenres)) ?></strong></div>
+                        <?php if ($filmReleaseDisplay !== '') : ?>
+                            <div class="sidebar-block__row"><span>Tanggal Rilis</span><strong><?= wpm_esc($filmReleaseDisplay) ?></strong></div>
+                        <?php endif; ?>
+                        <?php if ($filmDummyDuration !== null) : ?>
+                            <div class="sidebar-block__row"><span>Durasi</span><strong><?= wpm_esc($filmDummyDuration) ?></strong></div>
+                        <?php endif; ?>
+                        <?php if ($filmDummyAgeRating !== null) : ?>
+                            <div class="sidebar-block__row sidebar-block__row--last"><span>Rating Usia</span><strong><?= wpm_esc($filmDummyAgeRating) ?></strong></div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+
+                <div class="sidebar-block">
+                    <h3><?= wpm_icon('calendar') ?> Jadwal Tayang Bioskop</h3>
+                    <p class="sidebar-block__note">Info jadwal tayang, bukan tautan streaming.</p>
+                    <?php if ($filmDummyCinemas !== []) : ?>
+                    <div class="sidebar-block__cinemas">
+                        <?php foreach ($filmDummyCinemas as $cinema) : ?>
+                            <div class="cinema-item">
+                                <div class="cinema-item__name"><?= wpm_icon('pin') ?><?= wpm_esc((string) $cinema['name']) ?></div>
+                                <div class="cinema-item__city"><?= wpm_esc((string) $cinema['city']) ?></div>
+                                <div class="cinema-item__times">
+                                    <?php foreach ($cinema['times'] as $time) : ?>
+                                        <span class="time-pill"><?= wpm_esc((string) $time) ?></span>
+                                    <?php endforeach; ?>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                    <?php else : ?>
+                        <p class="sidebar-block__row">Cek jadwal di bioskop terdekat.</p>
+                    <?php endif; ?>
+                </div>
+
+                <?php if ($hasRightAd) : ?>
+                    <?= $rightAdHtml ?>
+                <?php endif; ?>
             </aside>
-            <?php endif; ?>
         </div>
     </div>
 </section>

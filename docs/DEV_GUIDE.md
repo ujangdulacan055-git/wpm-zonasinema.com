@@ -179,3 +179,50 @@ commit git sama sekali di project ini sejauh ini):
 - **Tidak ada akses git live** untuk push/commit atas nama user tanpa
   diminta eksplisit — lihat aturan umum soal actions yang butuh konfirmasi
   eksplisit sebelum dieksekusi (destructive/hard-to-reverse/visible-to-others).
+
+## 7. Script test manual Growth Agent (`~/dev-scripts/`, 19 Agu 2026)
+
+Buat testing cepat perubahan Prompt Control (system prompt / image prompt)
+tanpa nunggu jadwal cron `auto_draft_article` — 3 script PHP CLI sekali-pakai
+disimpan di **`~/dev-scripts/`** di server production (cPanel), **BUKAN**
+di `public_html` — sengaja di luar document root biar gak bisa diakses lewat
+browser/URL publik sama sekali (kalau ketaruh di `public_html`, siapa aja
+yang nebak URL-nya bisa trigger generate artikel/gambar tanpa login, motong
+kuota API OpenAI). Cuma bisa dijalanin lewat SSH/terminal cPanel.
+
+- **`~/dev-scripts/_test-refresh-headlines.php`** — force refresh trending
+  headlines dari `source_urls` (`auto_draft_automation.source_urls` di
+  `gsc_settings.opportunity_thresholds_json`), skip gate 12 jam
+  (`refresh_interval_hours`). Jalanin ini dulu kalau
+  `_test-auto-draft.php` gagal dengan error "semua headline sudah pernah
+  dipakai" atau "tidak ada headline tersedia".
+- **`~/dev-scripts/_test-auto-draft.php`** — manggil
+  `cms_growth_agent_generate_auto_draft_article()` langsung, sama persis
+  fungsi yang dipanggil cron tiap jam. Bikin draft artikel + cover image
+  asli (bukan simulasi), pakai 1 headline trending yang belum kepake. Kalau
+  `auto_publish` nyala di config, hasilnya LANGSUNG publish ke publik —
+  matiin dulu toggle-nya di Growth Agent → Otomatisasi kalau cuma mau lihat
+  draft-nya dulu sebelum live.
+- **`~/dev-scripts/_test-image-only.php`** — test PALING PAS buat perubahan
+  **prompt gambar** doang: generate 1 cover image pakai judul contoh yang
+  di-hardcode di baris `$testTitle` (edit baris itu buat ganti
+  skenario/sport), skip total logika headline/dedup/artikel. Nge-print
+  prompt lengkap yang dikirim ke GPT Image dulu (biar kelihatan hasil akhir
+  Prompt Control-nya persis), baru generate gambarnya. Bisa diulang
+  berkali-kali tanpa kehalang pool headline habis.
+
+Cara jalanin (dari SSH/terminal cPanel):
+```bash
+php ~/dev-scripts/_test-image-only.php
+php ~/dev-scripts/_test-auto-draft.php
+php ~/dev-scripts/_test-refresh-headlines.php
+```
+
+**Konteks insiden yang nemuin butuhnya script ini:** `image_agent` di **AI
+Agent Settings** sempat ke-assign ke model `GPT-5.5` (bukan model image
+generation valid, kemungkinan salah pilih pas setup) — generate gambar
+gagal total dengan error `"The model 'GPT-5.5' does not exist."`. Dibenerin
+dengan nambah entri baru di **AI Models** (`gpt-image-1`, provider
+`OpenAI`) dan assign ulang `image_agent` ke situ. `_test-image-only.php`
+di atas yang dipakai buat verifikasi fix ini sebelum nunggu siklus cron
+natural.

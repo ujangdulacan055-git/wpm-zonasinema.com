@@ -27,7 +27,7 @@ $page = wpm_special_page_by_slug($pdo, $slug);
 
 if (!$page) {
     http_response_code(404);
-    $pageTitle = 'Halaman Tidak Ditemukan — Sagagoal';
+    $pageTitle = 'Halaman Tidak Ditemukan — ZonaSinema';
     $pageDescription = 'Halaman yang kamu cari tidak ditemukan atau belum diterbitkan.';
     require __DIR__ . '/includes/site-header.php';
     ?>
@@ -112,7 +112,7 @@ $contactStatus = (string) ($_GET['contact'] ?? '');
 
 $pageTitle = trim((string) ($page['meta_title'] ?? '')) !== ''
     ? (string) $page['meta_title']
-    : (string) $page['title'] . ' — Sagagoal';
+    : (string) $page['title'] . ' — ZonaSinema';
 $pageDescription = trim((string) ($page['meta_description'] ?? '')) !== ''
     ? (string) $page['meta_description']
     : wpm_excerpt((string) $page['content'], 160);
@@ -186,7 +186,7 @@ require __DIR__ . '/includes/site-header.php';
 
             <div class="glass-card contact-form-card">
                 <?php if ($contactStatus === 'success') : ?>
-                    <div class="form-alert form-alert--success">Pesan kamu berhasil dikirim. Tim Sagagoal akan menghubungi balik secepatnya.</div>
+                    <div class="form-alert form-alert--success">Pesan kamu berhasil dikirim. Tim ZonaSinema akan menghubungi balik secepatnya.</div>
                 <?php elseif ($contactStatus === 'error') : ?>
                     <div class="form-alert form-alert--error">Pesan gagal dikirim. Mohon periksa kembali form dan coba lagi.</div>
                 <?php endif; ?>

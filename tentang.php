@@ -13,13 +13,13 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/includes/site-bootstrap.php';
 
-$aboutTitle = 'Sagagoal, Portal Livescore & Berita Bola Terpercaya';
-$aboutBody = 'Sagagoal menghadirkan jadwal pertandingan, live score, klasemen liga, dan berita sepak bola dalam satu tempat — disajikan ringkas, akurat, dan mudah dipahami untuk pembaca dari berbagai level.';
+$aboutTitle = 'ZonaSinema, Portal Review & Database Film Terpercaya';
+$aboutBody = 'ZonaSinema menghadirkan review, rating, dan database film dalam satu tempat — disajikan ringkas, akurat, dan mudah dipahami untuk pembaca dari berbagai level.';
 $aboutFeatures = [
-    ['icon' => 'megaphone', 'title' => 'Berita Bola', 'desc' => 'Update berita sepak bola tercepat dan terpercaya, dari transfer pemain hingga hasil pertandingan.'],
-    ['icon' => 'chart', 'title' => 'Live Score', 'desc' => 'Skor pertandingan real-time, dari kick-off sampai peluit akhir, langsung di halaman utama.'],
-    ['icon' => 'book', 'title' => 'Jadwal Pertandingan', 'desc' => 'Jadwal lengkap pertandingan dari liga-liga pilihan, mudah dipantau setiap hari.'],
-    ['icon' => 'flame', 'title' => 'Klasemen Liga', 'desc' => 'Klasemen liga terkini, update otomatis setiap pertandingan selesai.'],
+    ['icon' => 'megaphone', 'title' => 'Review Film', 'desc' => 'Update review film tercepat dan terpercaya, dari film baru rilis hingga klasik.'],
+    ['icon' => 'chart', 'title' => 'Rating & Skor', 'desc' => 'Skor dan rating film, membantu kamu memilih tontonan yang tepat.'],
+    ['icon' => 'book', 'title' => 'Database Film', 'desc' => 'Database lengkap film dari berbagai genre, mudah dijelajahi kapan saja.'],
+    ['icon' => 'flame', 'title' => 'Rekomendasi', 'desc' => 'Rekomendasi film terkini, update otomatis mengikuti rilis terbaru.'],
 ];
 
 $aboutPage = wpm_special_page_by_slug($pdo, 'tentang-kami');
@@ -32,7 +32,7 @@ if ($aboutPage !== null) {
     }
 }
 
-$pageTitle = 'Tentang Kami — Sagagoal';
+$pageTitle = 'Tentang Kami — ZonaSinema';
 $pageDescription = $aboutBody;
 $activeNav = 'special-about';
 $canonicalUrl = wpm_site_url(wpm_url_tentang());

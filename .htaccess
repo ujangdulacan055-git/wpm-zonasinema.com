@@ -122,3 +122,21 @@
     # includes/SpecialPages.php.
     RewriteRule ^([a-z0-9-]+)/?$ page.php?slug=$1 [L,QSA]
 </IfModule>
+
+# PWA caching headers (added 20 Aug 2026) — sw.js MUST be no-cache so the
+# browser always re-checks it against the server on every registration
+# call; a cached stale copy of the service worker script itself is the
+# classic way a PWA gets stuck serving an old cache forever after a
+# deploy, since the update mechanism depends on the browser actually
+# seeing the new script's bytes change. manifest.json gets a short max-age
+# instead of no-cache (it changes far less often than app content, but an
+# icon/theme-color tweak should still show up reasonably soon, not require
+# a hard refresh).
+<IfModule mod_headers.c>
+    <FilesMatch "^sw\.js$">
+        Header set Cache-Control "no-cache"
+    </FilesMatch>
+    <FilesMatch "^manifest\.json$">
+        Header set Cache-Control "public, max-age=3600"
+    </FilesMatch>
+</IfModule>

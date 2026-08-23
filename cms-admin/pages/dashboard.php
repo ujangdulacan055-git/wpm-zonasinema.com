@@ -196,9 +196,6 @@ $fmtDt = static function (?string $value): string {
                 // the sidebar, just no longer duplicated here. ?>
                 <a class="quick-actions__btn" href="<?= cms_esc(cms_nav_href('pages.php')) ?>">Manage pages &amp; articles</a>
                 <a class="quick-actions__btn" href="<?= cms_esc(cms_nav_href('media-library.php')) ?>">Media library</a>
-                <?php if ($qaIsSuper) : ?>
-                <a class="quick-actions__btn" href="<?= cms_esc(cms_nav_href('livescore-api-settings.php')) ?>">Livescore API Settings</a>
-                <?php endif; ?>
                 <a class="quick-actions__btn" href="<?= cms_esc(cms_nav_href('seo-dashboard.php')) ?>">SEO Dashboard</a>
                 <?php if ($qaIsAdminUp) : ?>
                 <a class="quick-actions__btn" href="<?= cms_esc(cms_nav_href('special-pages.php')) ?>">Edit Special Pages</a>

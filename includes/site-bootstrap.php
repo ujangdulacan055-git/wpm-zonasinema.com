@@ -2,7 +2,7 @@
 declare(strict_types=1);
 
 /**
- * Sagagoal public front-end — shared bootstrap.
+ * ZonaSinema public front-end — shared bootstrap.
  *
  * Included by every root-level public page (index.php, artikel.php,
  * kategori.php, pencarian.php). Self-contained: only depends on
@@ -27,11 +27,39 @@ function wpm_esc(?string $value): string
     return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
 }
 
+/**
+ * Session-based CSRF token for public-facing POST forms (request-film.php,
+ * 24 Agu 2026) — separate from cms-admin's cms_csrf_*() (that one's tied
+ * to the admin auth session/namespace, this one's for anonymous visitors).
+ * Session itself already started above (session_start()).
+ */
+function wpm_csrf_token(): string
+{
+    if (empty($_SESSION['wpm_csrf_token'])) {
+        $_SESSION['wpm_csrf_token'] = bin2hex(random_bytes(32));
+    }
+    return (string) $_SESSION['wpm_csrf_token'];
+}
+
+function wpm_csrf_field(): string
+{
+    return '<input type="hidden" name="csrf_token" value="' . wpm_esc(wpm_csrf_token()) . '">';
+}
+
+function wpm_csrf_verify(): bool
+{
+    $sent = (string) ($_POST['csrf_token'] ?? '');
+    $known = (string) ($_SESSION['wpm_csrf_token'] ?? '');
+    return $known !== '' && hash_equals($known, $sent);
+}
+
 /** Small inline SVG icon set used across every public page (stroke/fill = currentColor). */
 function wpm_icon(string $name): string
 {
     static $icons = [
         'news' => "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><rect x='3' y='4' width='14' height='16' rx='1.5'/><path d='M17 8h3v10a2 2 0 0 1-2 2H7'/><line x1='6.5' y1='8' x2='13.5' y2='8'/><line x1='6.5' y1='11.5' x2='13.5' y2='11.5'/><line x1='6.5' y1='15' x2='11' y2='15'/></svg>",
+        'star' => "<svg viewBox='0 0 24 24' fill='currentColor'><path d='M12 2.5l3.09 6.26 6.91 1.01-5 4.87 1.18 6.88L12 17.77l-6.18 3.75L7 14.64l-5-4.87 6.91-1.01L12 2.5z'/></svg>",
+        'film' => "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><rect x='2.5' y='4' width='19' height='16' rx='1.5'/><path d='M7 4v16M17 4v16M2.5 9h4.5M2.5 15h4.5M17 9h4.5M17 15h4.5'/></svg>",
         'chart' => "<svg viewBox='0 0 24 24' fill='currentColor'><rect x='3' y='13' width='4' height='8' rx='1'/><rect x='10' y='7' width='4' height='14' rx='1'/><rect x='17' y='10' width='4' height='11' rx='1'/></svg>",
         'eye' => "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><path d='M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z'/><circle cx='12' cy='12' r='3'/></svg>",
         'book' => "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><path d='M4 5.5A2.5 2.5 0 0 1 6.5 3H12v18H6.5A2.5 2.5 0 0 1 4 18.5v-13Z'/><path d='M20 5.5A2.5 2.5 0 0 0 17.5 3H12v18h5.5a2.5 2.5 0 0 0 2.5-2.5v-13Z'/></svg>",
@@ -189,7 +217,7 @@ function wpm_base_path(): string
 function wpm_site_url(string $path = ''): string
 {
     $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
-    $host = $_SERVER['HTTP_HOST'] ?? 'sagagoal.com';
+    $host = $_SERVER['HTTP_HOST'] ?? 'zonasinema.com';
     return $scheme . '://' . $host . wpm_base_path() . '/' . ltrim($path, '/');
 }
 
@@ -239,24 +267,6 @@ function wpm_url_pencarian(?string $query = null): string
     return ($query !== null && $query !== '') ? 'pencarian?q=' . rawurlencode($query) : 'pencarian';
 }
 
-/** Football livescore & jadwal — /football (renamed from /livescore 24 Jul 2026: "livescore" is a generic term every sport needs its own version of, not a page name). */
-function wpm_url_football(): string
-{
-    return 'football';
-}
-
-/** Basketball (NBA) livescore & jadwal — /basket (renamed from /nba 24 Jul 2026, same reasoning as wpm_url_football()). */
-function wpm_url_basket(): string
-{
-    return 'basket';
-}
-
-/** Formula 1 calendar & standings — /f1. Footer-only placement (not in main nav) — see wpm_nav_menu(). */
-function wpm_url_f1(): string
-{
-    return 'f1';
-}
-
 function wpm_url_tentang(): string
 {
     return 'tentang-kami';
@@ -304,52 +314,12 @@ function wpm_nav_menu(PDO $pdo): array
     $items = [
         ['id' => 'beranda', 'label' => 'Beranda', 'href' => wpm_site_url('')],
     ];
-    foreach (wpm_sports_modules_by_placement($pdo, 'menu') as $module) {
-        $items[] = ['id' => (string) $module['sport_key'], 'label' => (string) $module['label'], 'href' => (string) $module['route_slug']];
-    }
     $items[] = ['id' => 'berita', 'label' => 'Berita', 'href' => wpm_url_kategori()];
     foreach (wpm_special_pages_for_menu($pdo) as $specialPage) {
         $items[] = ['id' => 'special-' . (string) $specialPage['page_key'], 'label' => (string) $specialPage['title'], 'href' => (string) $specialPage['slug']];
     }
     return $items;
 }
-
-/** True when at least one fixture is currently in-play (first half, half-time, or second half). */
-function wpm_has_live_fixtures(PDO $pdo): bool
-{
-    return wpm_count_live_fixtures($pdo) > 0;
-}
-
-/** Count of fixtures currently in play — powers the "Live (N)" toggle on football.php. */
-function wpm_count_live_fixtures(PDO $pdo): int
-{
-    try {
-        $stmt = $pdo->query("SELECT COUNT(*) FROM fixtures WHERE status_short IN ('1H','HT','2H','ET','P')");
-        return (int) $stmt->fetchColumn();
-    } catch (Throwable $e) {
-        return 0;
-    }
-}
-
-/** Active leagues for the homepage filter row, in admin-configured order. */
-function wpm_active_leagues(PDO $pdo): array
-{
-    try {
-        $stmt = $pdo->query('SELECT id, name, logo, country, current_season FROM leagues WHERE is_active = 1 ORDER BY sort_order ASC, name ASC');
-        return $stmt->fetchAll();
-    } catch (Throwable $e) {
-        return [];
-    }
-}
-
-// Sport registry (wpm_all_sports(), wpm_ensure_sports_table()) — pulled
-// out to includes/SportsRegistry.php so backend-only settings classes
-// (BasketballSettings, etc.) can use it without loading this whole file.
-require_once __DIR__ . '/SportsRegistry.php';
-
-// Sports API Settings (wpm_nav_menu()'s dynamic menu/footer sport items,
-// cron gating) — see includes/SportsApiSettings.php's docblock.
-require_once __DIR__ . '/SportsApiSettings.php';
 
 // Special Pages (wpm_nav_menu()'s dynamic Kontak/FAQ/etc. menu items,
 // footer items, and page.php's router) — see includes/SpecialPages.php's
@@ -363,7 +333,14 @@ require_once __DIR__ . '/SpecialPages.php';
 function wpm_breaking_news_markup(PDO $pdo, int $limit = 8): string
 {
     try {
-        $stmt = $pdo->prepare("SELECT title, slug FROM pages WHERE status = 'published' ORDER BY published_at DESC LIMIT $limit");
+        $stmt = $pdo->prepare(
+            "SELECT p.title, p.slug
+             FROM pages p
+             LEFT JOIN films f ON f.page_id = p.page_id
+             WHERE p.status = 'published'
+             ORDER BY f.popularity DESC, p.published_at DESC
+             LIMIT $limit"
+        );
         $stmt->execute();
         $articles = $stmt->fetchAll();
     } catch (Throwable $e) {
@@ -375,7 +352,7 @@ function wpm_breaking_news_markup(PDO $pdo, int $limit = 8): string
     }
 
     $html = '<div class="breaking-ticker">';
-    $html .= '<span class="breaking-ticker__label"><span class="dot" aria-hidden="true"></span> Breaking</span>';
+    $html .= '<span class="breaking-ticker__label">Film Terpopuler</span>';
     $html .= '<div class="breaking-ticker__track"><div class="breaking-ticker__scroll">';
     foreach (array_merge($articles, $articles) as $article) {
         $html .= '<a href="' . wpm_esc(wpm_url_artikel((string) $article['slug'])) . '">' . wpm_esc((string) $article['title']) . '</a>';
@@ -925,6 +902,45 @@ function wpm_news_list_row(array $article): string
     return $html;
 }
 
+/**
+ * ZonaSinema "poster" card (21 Agu 2026 redesign) — used in the homepage
+ * poster slider in place of the old horizontal news-row list. Reuses the
+ * existing `pages` article data (featured_image as "poster", title,
+ * category_name, published_at) — there is no structured movie/rating
+ * table yet, so no rating badge is rendered (would require querying a
+ * column that doesn't exist). The year tag comes from published_at, with
+ * a graceful blank if the article has no publish date yet.
+ */
+function wpm_poster_card(array $article): string
+{
+    $img = wpm_image($article['featured_image'] ?? null);
+    $media = $img !== null
+        ? '<img src="' . wpm_esc($img) . '" alt="' . wpm_esc((string) $article['title']) . '" loading="lazy">'
+        : wpm_icon('news');
+    $url = wpm_url_artikel((string) $article['slug']);
+    $year = wpm_format_date($article['published_at'] ?? null, 'Y');
+    $category = trim((string) ($article['category_name'] ?? ''));
+    $rating = isset($article['vote_average']) && $article['vote_average'] !== null ? (float) $article['vote_average'] : null;
+
+    $html = '<article class="poster-card">';
+    $html .= '<a class="poster-card__media" href="' . wpm_esc($url) . '">' . $media;
+    if ($rating !== null) {
+        $html .= '<span class="poster-card__rating">' . wpm_icon('star') . '<span>' . wpm_esc(number_format($rating, 1)) . '</span></span>';
+    }
+    if ($year !== '') {
+        $html .= '<span class="poster-card__tag">' . wpm_esc($year) . '</span>';
+    }
+    $html .= '</a>';
+    $html .= '<div>';
+    $html .= '<h3 class="poster-card__title"><a href="' . wpm_esc($url) . '">' . wpm_esc((string) $article['title']) . '</a></h3>';
+    if ($category !== '') {
+        $html .= '<div class="poster-card__meta">' . wpm_esc($category) . '</div>';
+    }
+    $html .= '</div></article>';
+
+    return $html;
+}
+
 /** Numbered trending sidebar item — green rank badge, 2-line clamped title, thumbnail right. */
 function wpm_trending_item(array $article, int $rank): string
 {
@@ -934,11 +950,20 @@ function wpm_trending_item(array $article, int $rank): string
         : wpm_icon('news');
     $url = wpm_url_artikel((string) $article['slug']);
 
+    // Rating film, bukan byline penulis+waktu (24 Agu 2026) — situs ini
+    // 100% film, "ditulis oleh Admin X, 2 jam lalu" gak relevan buat
+    // konteks database film (beda dari portal berita). wpm_news_byline()
+    // dibiarkan apa adanya buat hero card/list row lain yang masih pakai.
+    $rating = isset($article['vote_average']) && $article['vote_average'] !== null ? (float) $article['vote_average'] : null;
+    $ratingLine = $rating !== null
+        ? wpm_icon('star') . '<span>' . wpm_esc(number_format($rating, 1)) . '</span>'
+        : '<span>Rating belum tersedia</span>';
+
     $html = '<article class="trending-item">';
     $html .= '<span class="trending-item__rank">' . (int) $rank . '</span>';
     $html .= '<div class="trending-item__body">';
     $html .= '<h4 class="trending-item__title"><a href="' . wpm_esc($url) . '">' . wpm_esc((string) $article['title']) . '</a></h4>';
-    $html .= '<div class="news-byline news-byline--sm">' . wpm_news_byline($article) . '</div>';
+    $html .= '<div class="trending-item__rating">' . $ratingLine . '</div>';
     $html .= '</div>';
     $html .= '<a class="trending-item__media" href="' . wpm_esc($url) . '">' . $media . '</a>';
     $html .= '</article>';
@@ -961,7 +986,7 @@ function wpm_trending_item(array $article, int $rank): string
  * a dead widget cluttering the homepage.
  */
 /**
- * "Aplikasi Sagagoal — Segera Hadir" promo card — shared by tentang.php,
+ * "Aplikasi ZonaSinema — Segera Hadir" promo card — shared by tentang.php,
  * page.php, and index.php (homepage) so all three reuse the exact same
  * markup instead of duplicating it.
  *
@@ -986,9 +1011,9 @@ function wpm_app_promo_section(?PDO $pdo = null): string
 <section class="crypto-section--tight">
     <div class="crypto-container">
         <div class="glass-card crypto-card app-promo-card">
-            <div class="crypto-card__icon app-promo-card__icon">' . wpm_icon('rocket') . '</div>
-            <h3 class="app-promo-card__title">Aplikasi Sagagoal — Segera Hadir</h3>
-            <p class="app-promo-card__subtitle">Pantau live score dan jadwal pertandingan langsung dari genggaman. Aplikasi Android &amp; iOS sedang dalam pengembangan.</p>
+            <img class="app-promo-card__logo" src="' . wpm_esc(wpm_site_url('assets/img/branding/logo-zonasinema-white-transparent.png')) . '" alt="ZonaSinema">
+            <h3 class="app-promo-card__title">Aplikasi ZonaSinema — Segera Hadir</h3>
+            <p class="app-promo-card__subtitle">Temukan review dan rekomendasi film langsung dari genggaman. Aplikasi Android &amp; iOS sedang dalam pengembangan.</p>
             <div class="app-promo-card__badges">
                 <span class="crypto-btn crypto-btn--ghost app-store-badge app-store-badge--disabled">
                     <span class="app-store-badge__icon">' . wpm_icon('google-play') . '</span>
@@ -1003,411 +1028,6 @@ function wpm_app_promo_section(?PDO $pdo = null): string
     </div>' . ($adHtml !== '' ? '
     <div class="crypto-container app-promo-card__ad-wrap">' . $adHtml . '</div>' : '') . '
 </section>';
-}
-
-function wpm_live_now_widget(PDO $pdo): string
-{
-    $activeSports = [];
-    try {
-        $activeSports = $pdo->query("SELECT `key` FROM sports WHERE is_active = 1")->fetchAll(PDO::FETCH_COLUMN);
-    } catch (Throwable $e) {
-        return '';
-    }
-
-    /** @var list<array{sort: int, html: string}> $items */
-    $items = [];
-
-    if (in_array('football', $activeSports, true)) {
-        try {
-            $stmt = $pdo->query(
-                "SELECT f.*, ht.name AS home_name, ht.logo AS home_logo,
-                        at.name AS away_name, at.logo AS away_logo,
-                        l.name AS league_name, l.logo AS league_logo
-                 FROM fixtures f
-                 JOIN teams ht ON ht.id = f.home_team_id
-                 JOIN teams at ON at.id = f.away_team_id
-                 JOIN leagues l ON l.id = f.league_id
-                 WHERE f.status_short IN ('1H','HT','2H','ET','P')
-                 ORDER BY f.kickoff_at ASC
-                 LIMIT 5"
-            );
-            foreach ($stmt->fetchAll() as $fixture) {
-                $items[] = ['sort' => (int) strtotime((string) $fixture['kickoff_at']), 'html' => wpm_fixture_card($fixture)];
-            }
-        } catch (Throwable $e) {
-            // fixtures/teams/leagues not ready yet — treat as none live.
-        }
-    }
-
-    if (in_array('basketball', $activeSports, true)) {
-        try {
-            $stmt = $pdo->query(
-                "SELECT g.*, ht.name AS home_name, ht.logo AS home_logo,
-                        at.name AS away_name, at.logo AS away_logo
-                 FROM nba_games g
-                 JOIN nba_teams ht ON ht.id = g.home_team_id
-                 JOIN nba_teams at ON at.id = g.away_team_id
-                 WHERE g.status_short = 2
-                 ORDER BY g.game_date ASC
-                 LIMIT 5"
-            );
-            foreach ($stmt->fetchAll() as $game) {
-                $items[] = ['sort' => (int) strtotime((string) $game['game_date']), 'html' => wpm_nba_game_card($game)];
-            }
-        } catch (Throwable $e) {
-            // nba_games not created yet (no sync has run) — treat as none live.
-        }
-    }
-
-    if ($items === []) {
-        return '';
-    }
-
-    usort($items, static fn(array $a, array $b): int => $a['sort'] <=> $b['sort']);
-    $items = array_slice($items, 0, 3);
-
-    $html = '<div class="live-now-widget">';
-    $html .= '<div class="live-now-widget__head">';
-    $html .= '<h2 class="live-now-widget__title"><span class="live-now-widget__dot" aria-hidden="true"></span>Live Sekarang</h2>';
-    $html .= '<a class="live-now-widget__link" href="' . wpm_esc(wpm_url_football()) . '">Lihat Semua Livescore →</a>';
-    $html .= '</div>';
-    $html .= '<div class="live-now-widget__list">';
-    foreach ($items as $item) {
-        $html .= $item['html'];
-    }
-    $html .= '</div></div>';
-
-    return $html;
-}
-
-/**
- * Sport-filter chip row for the news homepage — "Semua" first, then one
- * chip per ACTIVE sport (sports.is_active = 1). Replaces the old
- * per-league filter row (world cup/premier league/etc.) — that was a
- * leftover from the football-only design; leagues are a livescore/
- * fixtures concern now (grouped inside football.php itself), not a
- * homepage news-browsing one. Clicking a chip filters the article feed
- * by pages.sport_key (see cms-admin/pages/pages.php's "Cabang Olahraga"
- * field). Returns '' if there are no active sports at all (shouldn't
- * happen in practice — football always ships active).
- */
-function wpm_sport_filter_row(PDO $pdo, string $tab, ?string $activeSportKey): string
-{
-    $sports = [];
-    try {
-        // Read icon from sports table (legacy), but is_active from sports_api_settings
-        // (single source of truth for active/inactive status as of 24 Jul 2026). Join
-        // by matching sports.key with sports_api_settings.sport_key.
-        // article_count via correlated subquery (not a LEFT JOIN + GROUP BY)
-        // to keep it independent of the sports_api_settings join above —
-        // same published-only rule as the category chip count on kategori.php
-        // (COUNT(*) ... WHERE p.status = 'published').
-        //
-        // `COLLATE utf8mb4_unicode_ci` on the s.`key` side is required, not
-        // decorative: sports.key is utf8mb4_general_ci but pages.sport_key
-        // is utf8mb4_unicode_ci (columns added at different times), so a
-        // direct s.`key` = p.sport_key comparison throws "Illegal mix of
-        // collations" — this was never hit before because the only other
-        // place these two get compared (index.php's chip-click filter)
-        // binds sport_key against a PHP string parameter, not a column.
-        $sports = $pdo->query(
-            "SELECT s.`key`, s.name, s.icon, a.sort_order,
-                    (SELECT COUNT(*) FROM pages p WHERE p.sport_key = s.`key` COLLATE utf8mb4_unicode_ci AND p.status = 'published') AS article_count
-             FROM sports s
-             INNER JOIN sports_api_settings a ON s.`key` = a.sport_key
-             WHERE a.is_active = 1
-             ORDER BY a.sort_order ASC, s.name ASC"
-        )->fetchAll();
-    } catch (Throwable $e) {
-        return '';
-    }
-
-    if ($sports === []) {
-        return '';
-    }
-
-    $chipUrl = static function (?string $sportKey) use ($tab): string {
-        $url = 'index.php?tab=' . $tab;
-        return $sportKey !== null ? $url . '&sport=' . rawurlencode($sportKey) : $url;
-    };
-
-    $html = '<div class="news-filter-row">';
-    $html .= '<div class="news-filter-row__scroll">';
-
-    $allClass = 'news-filter-pill' . ($activeSportKey === null ? ' is-active' : '');
-    $html .= '<a class="' . $allClass . '" href="' . wpm_esc($chipUrl(null)) . '">Semua</a>';
-
-    foreach ($sports as $sport) {
-        $isActive = $activeSportKey === (string) $sport['key'];
-        $classes = 'news-filter-pill' . ($isActive ? ' is-active' : '');
-        $html .= '<a class="' . $classes . '" href="' . wpm_esc($chipUrl((string) $sport['key'])) . '">';
-        $html .= wpm_icon((string) ($sport['icon'] ?? 'trophy'));
-        // Article count badge removed 11 Agu 2026 (permintaan operator) —
-        // was '<span>' . name . ' (' . article_count . ')</span>'. Query
-        // that computes $sport['article_count'] (see the SELECT above)
-        // deliberately left as-is rather than removed — cheap correlated
-        // subquery, and removing it risks breaking something else that
-        // might read the same $sports array later; simplest safe fix is
-        // just not printing the count anymore.
-        $html .= '<span>' . wpm_esc((string) $sport['name']) . '</span>';
-        $html .= '</a>';
-    }
-
-    $html .= '</div></div>';
-
-    return $html;
-}
-
-/* ── Livescore helpers ───────────────────────────────────────────────── */
-
-/** True for the fixture statuses API-Football uses while a match is in progress. */
-function wpm_fixture_is_live(string $statusShort): bool
-{
-    return in_array($statusShort, ['1H', 'HT', '2H', 'ET', 'P'], true);
-}
-
-/** Small status badge — kickoff time if not started, live+elapsed if in-play, else the short code. */
-function wpm_fixture_status_badge(array $fixture): string
-{
-    $status = (string) ($fixture['status_short'] ?? 'NS');
-    $elapsed = $fixture['elapsed'] ?? null;
-
-    if ($status === 'NS' || $status === 'TBD') {
-        return '<span class="fixture-status">' . wpm_esc(wpm_format_match_time((string) ($fixture['kickoff_at'] ?? ''))) . '</span>';
-    }
-    if (wpm_fixture_is_live($status)) {
-        $label = $status === 'HT' ? 'HT' : ($elapsed !== null ? (int) $elapsed . "'" : $status);
-        return '<span class="fixture-status fixture-status--live"><span class="fixture-status__dot" aria-hidden="true"></span>' . wpm_esc($label) . '</span>';
-    }
-    if (in_array($status, ['FT', 'AET', 'PEN'], true)) {
-        return '<span class="fixture-status">FT</span>';
-    }
-
-    return '<span class="fixture-status fixture-status--muted">' . wpm_esc($status) . '</span>';
-}
-
-/** One fixture row — home/away team logo+name, score or "vs", status badge. Used on football.php and league detail's Jadwal tab. */
-function wpm_fixture_card(array $fixture): string
-{
-    $homeLogo = wpm_image($fixture['home_logo'] ?? null);
-    $awayLogo = wpm_image($fixture['away_logo'] ?? null);
-    $homeName = (string) ($fixture['home_name'] ?? '—');
-    $awayName = (string) ($fixture['away_name'] ?? '—');
-    $leagueName = (string) ($fixture['league_name'] ?? '');
-    $hasScore = $fixture['home_score'] !== null && $fixture['away_score'] !== null;
-    $isLive = wpm_fixture_is_live((string) ($fixture['status_short'] ?? ''));
-
-    // data-search backs the client-side "Cari pertandingan" filter on
-    // football.php — no server round-trip per keystroke.
-    $searchText = mb_strtolower($homeName . ' ' . $awayName . ' ' . $leagueName);
-
-    $html = '<div class="fixture-card' . ($isLive ? ' is-live' : '') . '" data-fixture-id="' . (int) $fixture['id'] . '" data-status="' . wpm_esc((string) ($fixture['status_short'] ?? '')) . '" data-search="' . wpm_esc($searchText) . '">';
-
-    $html .= '<div class="fixture-card__team fixture-card__team--home">';
-    $html .= $homeLogo !== null ? '<img src="' . wpm_esc($homeLogo) . '" alt="" loading="lazy">' : wpm_icon('trophy');
-    $html .= '<span>' . wpm_esc($homeName) . '</span>';
-    $html .= '</div>';
-
-    $html .= '<div class="fixture-card__center">';
-    if ($hasScore) {
-        $html .= '<div class="fixture-card__score" data-field="score"><span>' . (int) $fixture['home_score'] . '</span><span class="fixture-card__score-sep"></span><span>' . (int) $fixture['away_score'] . '</span></div>';
-    } else {
-        $html .= '<div class="fixture-card__score fixture-card__score--vs">vs</div>';
-    }
-    $html .= '<div data-field="status">' . wpm_fixture_status_badge($fixture) . '</div>';
-    $html .= '</div>';
-
-    $html .= '<div class="fixture-card__team fixture-card__team--away">';
-    $html .= $awayLogo !== null ? '<img src="' . wpm_esc($awayLogo) . '" alt="" loading="lazy">' : wpm_icon('trophy');
-    $html .= '<span>' . wpm_esc($awayName) . '</span>';
-    $html .= '</div>';
-
-    $html .= '</div>';
-
-    return $html;
-}
-
-/**
- * Translates an API-Football `round` string into Indonesian for display.
- * Falls back to the raw string when a pattern isn't recognized — new
- * competitions/round formats degrade gracefully instead of breaking.
- */
-function wpm_translate_round(string $round): string
-{
-    $round = trim($round);
-    if ($round === '') {
-        return '';
-    }
-
-    if (preg_match('/^Regular Season\s*-\s*(\d+)$/i', $round, $m) === 1) {
-        return 'Pekan ' . $m[1];
-    }
-    if (preg_match('/^Group Stage\s*-\s*(\d+)$/i', $round, $m) === 1) {
-        return 'Fase Grup - ' . $m[1];
-    }
-    if (preg_match('/^Round of (\d+)$/i', $round, $m) === 1) {
-        return $m[1] . ' Besar';
-    }
-    if (preg_match('/^(\d+)(?:st|nd|rd|th)\s+Round$/i', $round, $m) === 1) {
-        return 'Babak ' . $m[1];
-    }
-
-    $map = [
-        'group stage' => 'Fase Grup',
-        'quarterfinals' => 'Perempat Final',
-        'quarter-finals' => 'Perempat Final',
-        'semifinals' => 'Semifinal',
-        'semi-finals' => 'Semifinal',
-        'final' => 'Final',
-        '3rd place final' => 'Perunggu',
-        'third place final' => 'Perunggu',
-        'bronze final' => 'Perunggu',
-    ];
-
-    return $map[mb_strtolower($round)] ?? $round;
-}
-
-/** "Internasional" for World Cup-style entries (country === 'World'), else the country name as-is. */
-function wpm_league_subtitle(?string $country): string
-{
-    $country = trim((string) $country);
-    return ($country === '' || $country === 'World') ? 'Internasional' : $country;
-}
-
-/** Groups a flat fixture list (already joined with round) into [['round' => raw, 'round_label' => translated, 'fixtures' => [...]], ...], in first-seen order. */
-function wpm_group_fixtures_by_round(array $fixtures): array
-{
-    $groups = [];
-    foreach ($fixtures as $fixture) {
-        $round = (string) ($fixture['round'] ?? '');
-        if (!isset($groups[$round])) {
-            $groups[$round] = [
-                'round' => $round,
-                'round_label' => wpm_translate_round($round),
-                'fixtures' => [],
-            ];
-        }
-        $groups[$round]['fixtures'][] = $fixture;
-    }
-    return array_values($groups);
-}
-
-/** Groups a flat fixture list (already joined with league_name/league_logo/league_country) into per-league groups, each further split into rounds via wpm_group_fixtures_by_round(). */
-function wpm_group_fixtures_by_league(array $fixtures): array
-{
-    $groups = [];
-    foreach ($fixtures as $fixture) {
-        $leagueId = (int) ($fixture['league_id'] ?? 0);
-        if (!isset($groups[$leagueId])) {
-            $groups[$leagueId] = [
-                'league' => [
-                    'id' => $leagueId,
-                    'name' => $fixture['league_name'] ?? '—',
-                    'logo' => $fixture['league_logo'] ?? null,
-                    'country' => $fixture['league_country'] ?? null,
-                ],
-                'fixtures' => [],
-            ];
-        }
-        $groups[$leagueId]['fixtures'][] = $fixture;
-    }
-
-    return array_map(
-        static function (array $group): array {
-            return [
-                'league' => $group['league'],
-                'rounds' => wpm_group_fixtures_by_round($group['fixtures']),
-            ];
-        },
-        array_values($groups)
-    );
-}
-
-/**
- * NBA game-card rendering (basket.php) — deliberately reuses the football
- * fixture-card's CSS classes (.fixture-card, .fixture-card__team, etc.)
- * and data-search/data-status/data-fixture-id attribute contract so
- * assets/js/livescore.js's search/live-toggle/calendar logic works
- * unchanged on basket.php; only the status-code meaning differs (NBA v2
- * uses numeric codes: 1=Not Started, 2=Live, 3=Finished, 4=Postponed,
- * 5=Delayed, 6=Canceled — not football's "1H/HT/2H/ET/P" strings).
- */
-function wpm_nba_is_live(int $statusShort): bool
-{
-    return $statusShort === 2;
-}
-
-/** Count of NBA games currently in play — powers the "Live (N)" toggle on basket.php. */
-function wpm_count_live_nba_games(PDO $pdo): int
-{
-    try {
-        $stmt = $pdo->query('SELECT COUNT(*) FROM nba_games WHERE status_short = 2');
-        return (int) $stmt->fetchColumn();
-    } catch (Throwable $e) {
-        return 0;
-    }
-}
-
-/** Small status badge — tip-off time if not started, live+period if in-play, "FINAL" if done, else the status_long text. */
-function wpm_nba_status_badge(array $game): string
-{
-    $status = (int) ($game['status_short'] ?? 1);
-
-    if ($status === 1) {
-        return '<span class="fixture-status">' . wpm_esc(wpm_format_match_time((string) ($game['game_date'] ?? ''))) . '</span>';
-    }
-    if ($status === 2) {
-        $period = $game['period_current'] ?? null;
-        $label = $period !== null ? 'Q' . (int) $period : 'LIVE';
-        return '<span class="fixture-status fixture-status--live"><span class="fixture-status__dot" aria-hidden="true"></span>' . wpm_esc($label) . '</span>';
-    }
-    if ($status === 3) {
-        return '<span class="fixture-status">FINAL</span>';
-    }
-
-    $labels = [4 => 'Ditunda', 5 => 'Delay', 6 => 'Dibatalkan'];
-    $label = $labels[$status] ?? (string) ($game['status_long'] ?? '');
-    return '<span class="fixture-status fixture-status--muted">' . wpm_esc($label) . '</span>';
-}
-
-/** One NBA game row — home/away team logo+name, score or "vs", status badge. Used on basket.php. */
-function wpm_nba_game_card(array $game): string
-{
-    $homeLogo = wpm_image($game['home_logo'] ?? null);
-    $awayLogo = wpm_image($game['away_logo'] ?? null);
-    $homeName = (string) ($game['home_name'] ?? '—');
-    $awayName = (string) ($game['away_name'] ?? '—');
-    $hasScore = $game['home_score'] !== null && $game['away_score'] !== null;
-    $isLive = wpm_nba_is_live((int) ($game['status_short'] ?? 1));
-
-    // data-search/data-status back the same client-side search + live
-    // filter that football.php uses (assets/js/livescore.js).
-    $searchText = mb_strtolower($homeName . ' ' . $awayName);
-
-    $html = '<div class="fixture-card' . ($isLive ? ' is-live' : '') . '" data-fixture-id="' . (int) $game['id'] . '" data-status="' . (int) ($game['status_short'] ?? 1) . '" data-search="' . wpm_esc($searchText) . '">';
-
-    $html .= '<div class="fixture-card__team fixture-card__team--home">';
-    $html .= $homeLogo !== null ? '<img src="' . wpm_esc($homeLogo) . '" alt="" loading="lazy">' : wpm_icon('basketball');
-    $html .= '<span>' . wpm_esc($homeName) . '</span>';
-    $html .= '</div>';
-
-    $html .= '<div class="fixture-card__center">';
-    if ($hasScore) {
-        $html .= '<div class="fixture-card__score" data-field="score"><span>' . (int) $game['home_score'] . '</span><span class="fixture-card__score-sep"></span><span>' . (int) $game['away_score'] . '</span></div>';
-    } else {
-        $html .= '<div class="fixture-card__score fixture-card__score--vs">vs</div>';
-    }
-    $html .= '<div data-field="status">' . wpm_nba_status_badge($game) . '</div>';
-    $html .= '</div>';
-
-    $html .= '<div class="fixture-card__team fixture-card__team--away">';
-    $html .= $awayLogo !== null ? '<img src="' . wpm_esc($awayLogo) . '" alt="" loading="lazy">' : wpm_icon('basketball');
-    $html .= '<span>' . wpm_esc($awayName) . '</span>';
-    $html .= '</div>';
-
-    $html .= '</div>';
-
-    return $html;
 }
 
 /** Splits article HTML on paragraph boundaries and inserts $insertHtml at the midpoint. */

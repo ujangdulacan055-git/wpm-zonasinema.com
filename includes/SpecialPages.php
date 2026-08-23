@@ -20,7 +20,7 @@ require_once __DIR__ . '/../cms-admin/includes/schema-guard.php';
 
 /** Slugs already owned by hardcoded routes/files — a special page can't claim these (except a page keeping its own already-seeded slug). */
 const WPM_SPECIAL_PAGE_RESERVED_SLUGS = [
-    'berita', 'football', 'basket', 'f1', 'artikel', 'pencarian', 'about', 'tentang-kami', 'index', 'kontak',
+    'berita', 'artikel', 'pencarian', 'about', 'tentang-kami', 'index', 'kontak',
 ];
 
 function wpm_ensure_special_pages_table(PDO $pdo): void
@@ -51,7 +51,7 @@ function wpm_ensure_special_pages_table(PDO $pdo): void
             'page_key' => 'contact',
             'title' => 'Kontak',
             'slug' => 'kontak',
-            'content' => 'Tertarik kerja sama, kirim rilis berita, atau gabung komunitas pembaca Sagagoal? Kirim pesan lewat form di bawah.',
+            'content' => 'Tertarik kerja sama, kirim rilis berita, atau gabung komunitas pembaca ZonaSinema? Kirim pesan lewat form di bawah.',
             'status' => 'published',
         ]);
     }

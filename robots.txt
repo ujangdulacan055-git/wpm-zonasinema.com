@@ -1,0 +1,11 @@
+# ZonaSinema.com — robots.txt
+# STATUS: TAHAP PRA-LAUNCH — konten masih dummy/placeholder, blok semua
+# crawler dulu sampai integrasi TMDb (docs/BRIEF-INTEGRASI-TMDB-SKEMA-FILM.md)
+# selesai dan konten film asli udah live.
+#
+# WAJIB DIUBAH setelah konten asli siap: ganti "Disallow: /" jadi
+# "Disallow:" (kosong) atau hapus baris itu, lalu tambahin baris Sitemap
+# di bawah. Lihat docs/ROADMAP.md untuk status terkini.
+
+User-agent: *
+Disallow: /

@@ -60,26 +60,6 @@ $integrationsNavGroup = [
     ],
 ];
 
-/**
- * Read-only per-sport match/schedule reporting pages (24 Jul 2026) — each
- * reads its own sport's tables (fixtures/nba_games/f1_*), filled by that
- * sport's own cron script, no shared/unified table. Split out of
- * Integrations (which is about API *configuration*) into its own group
- * since this is read-only *data*, same reasoning as AI Management being
- * its own group instead of living under Integrations.
- */
-$sportsDataNavGroup = [
-    'label' => 'Sports Data',
-    'icon' => 'chart',
-    'items' => [
-        ['id' => 'matches', 'label' => 'Football Matches', 'href' => cms_nav_href('matches.php'), 'icon' => 'chart', 'roles' => $ROLES_ADMIN_UP],
-        ['id' => 'nba-games', 'label' => 'NBA Games', 'href' => cms_nav_href('nba-games.php'), 'icon' => 'chart', 'roles' => $ROLES_ADMIN_UP],
-        ['id' => 'f1-races', 'label' => 'F1 Races', 'href' => cms_nav_href('f1-races.php'), 'icon' => 'flag', 'roles' => $ROLES_ADMIN_UP],
-        ['id' => 'f1-podium', 'label' => 'F1 Podium', 'href' => cms_nav_href('f1-podium.php'), 'icon' => 'flag', 'roles' => $ROLES_ADMIN_UP],
-        ['id' => 'f1-standings', 'label' => 'F1 Standings', 'href' => cms_nav_href('f1-standings.php'), 'icon' => 'chart', 'roles' => $ROLES_ADMIN_UP],
-    ],
-];
-
 $seoNavGroup = [
     'label' => 'SEO Settings',
     'icon' => 'search',
@@ -138,9 +118,6 @@ $sidebarSections = [
 
     // 2. SEO Settings — Dashboard, Redirects, and Schema all in one group.
     ['type' => 'group'] + $seoNavGroup,
-
-    // 3. Sports Data (read-only per-sport match/schedule reporting)
-    ['type' => 'group'] + $sportsDataNavGroup,
 
     // 3b. Integrations
     ['type' => 'group'] + $integrationsNavGroup,

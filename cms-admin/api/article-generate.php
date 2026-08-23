@@ -48,8 +48,8 @@ if ($title === '' && $notes === '') {
 }
 
 $defaultSystemPrompt =
-    'You are "Agent SEO", an editorial writing assistant for Sagagoal, a football/soccer livescore ' .
-    'and news website. Write in Bahasa Indonesia by default, unless the editorial notes explicitly ask for ' .
+    'You are "Agent SEO", an editorial writing assistant for ZonaSinema, a movie review ' .
+    'and database website. Write in Bahasa Indonesia by default, unless the editorial notes explicitly ask for ' .
     'another language or tone. Given a title and editorial notes, write a complete, well-structured ' .
     'article body as clean HTML using only <p>, <h2>, <h3>, <ul>, <li>, <strong>, <em> tags — no ' .
     '<html>, <body>, <script>, or inline styles. Also produce a short 1-2 sentence excerpt, a ' .

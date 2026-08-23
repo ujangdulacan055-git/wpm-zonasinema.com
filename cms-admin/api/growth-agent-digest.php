@@ -155,7 +155,7 @@ $lastAnalysisAt = $safeScalar($pdo, 'SELECT MAX(created_at) AS m FROM growth_age
 $adminUrl = cms_admin_base_url() . 'pages/growth-agent.php';
 
 $summaryLines = [
-    '📊 Digest Growth Agent Sagagoal',
+    '📊 Digest Growth Agent ZonaSinema',
     $opportunitiesOpen . ' opportunity terbuka (' . $opportunitiesNew7d . ' baru minggu ini)',
     $jobsNeedReview . ' job nunggu review, ' . $jobsManualAction . ' perlu aksi manual',
     $indexingIssuesOpen . ' masalah index, ' . $contentConflictsOpen . ' potensi konflik konten',

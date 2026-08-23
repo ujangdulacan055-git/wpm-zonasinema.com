@@ -15,7 +15,7 @@ declare(strict_types=1);
  * Root .htaccess has `RewriteCond %{REQUEST_FILENAME} -f` before the
  * sitemap RewriteRules, meaning a REAL FILE at sitemap.xml always wins
  * over the dynamic route. So the moment this script writes sitemap.xml,
- * https://sagagoal.com/sitemap.xml stops being live/dynamic and starts
+ * https://zonasinema.com/sitemap.xml stops being live/dynamic and starts
  * serving that frozen snapshot instead — it will NOT include new articles
  * until this page is run again. Use the "Remove static file" button below
  * any time to delete it and instantly go back to the always-fresh dynamic
@@ -115,7 +115,7 @@ $liveCount = (int) $pdo->query("SELECT COUNT(*) FROM sitemap_urls WHERE included
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<title>Generate Static sitemap.xml — Sagagoal</title>
+<title>Generate Static sitemap.xml — ZonaSinema</title>
 <style>
   body { font-family: -apple-system, sans-serif; max-width: 640px; margin: 40px auto; padding: 0 16px; color: #222; line-height: 1.55; }
   h1 { font-size: 20px; }

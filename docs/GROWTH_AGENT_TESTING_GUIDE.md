@@ -15,10 +15,13 @@ Terakhir diperbarui: 7 Agustus 2026
 Login ke admin panel: `https://sagagoal.com/cms-admin/`
 
 Semua fitur Growth Agent ada di grup sidebar **AI Management**:
+
 - **Growth Agent** (`growth-agent.php`) — pusat kendali, 4 tab
 - **SEO Intelligence** (`seo-intelligence.php`) — Keyword Expansion & Topic Cluster
 
 ---
+
+
 
 ## 1. Growth Agent — halaman utama
 
@@ -29,6 +32,8 @@ Buka sidebar → **AI Management → Growth Agent**.
 
 ---
 
+
+
 ## 2. Tes Article Idea (fitur baru — collision avoidance)
 
 📍 Tab **Perlu Tindakan** → panel **Job Terbaru**
@@ -37,15 +42,23 @@ Ini fitur paling baru rilis, prioritas nomor satu buat dicek.
 
 - [ ] Cari job dengan `job_type = gsc_article_idea` yang baru muncul.
 - [ ] Kalau ada artikel Sagagoal yang topiknya mirip → harus ada badge
-      **⚠ SEO-G0**.
+  ```
+  **⚠ SEO-G0**.
+  ```
 - [ ] Kalau judul yang diusulin AI kebetulan mirip headline dari
-      detik.com/CNN Indonesia → harus ada badge peringatan **judul mirip
-      headline sumber**. **Ini yang paling penting dicek** — bukti fitur
-      barunya beneran jalan.
+  ```
+  detik.com/CNN Indonesia → harus ada badge peringatan **judul mirip
+  headline sumber**. **Ini yang paling penting dicek** — bukti fitur
+  barunya beneran jalan.
+  ```
 - [ ] Kalau belum ada job baru: tunggu cron jam 04:00, atau cek tombol
-      trigger manual di halaman ini.
+  ```
+  trigger manual di halaman ini.
+  ```
 
 ---
+
+
 
 ## 3. Keyword Expansion Agent
 
@@ -54,10 +67,14 @@ Ini fitur paling baru rilis, prioritas nomor satu buat dicek.
 - [ ] Klik tombol **"Scan Keyword Expansion"**.
 - [ ] Tunggu AI generate topik baru.
 - [ ] ⚠️ **Baca dulu topiknya sebelum approve** — fitur ini belum pernah
-      diuji pakai AI sungguhan di production, cuma pakai data mock waktu
-      testing devs.
+  ```
+  diuji pakai AI sungguhan di production, cuma pakai data mock waktu
+  testing devs.
+  ```
 
 ---
+
+
 
 ## 4. Internal Linking Agent
 
@@ -69,16 +86,22 @@ Ini fitur paling baru rilis, prioritas nomor satu buat dicek.
 
 ---
 
+
+
 ## 5. Technical SEO Auditor
 
 📍 Tab **Kesehatan Teknis**
 
 - [ ] Klik tombol cek konten (alt text + schema markup).
 - [ ] Klik tombol cek PSI (kecepatan halaman) — proses ini agak lama
-      (10-30 detik per URL), wajar.
+  ```
+  (10-30 detik per URL), wajar.
+  ```
 - [ ] Ini murni laporan — gak ada yang perlu di-approve/apply.
 
 ---
+
+
 
 ## 6. Daftar Artikel Berpotensi Tinggi
 
@@ -90,25 +113,32 @@ Ini fitur paling baru rilis, prioritas nomor satu buat dicek.
 
 ---
 
+
+
 ## 7. Measurement Loop
 
 📍 Tab **Data & Performa** → panel **Feedback / Sebelum-Sesudah**
 
 - ⚠️ **Belum bakal nampilin apa-apa sekarang.** Butuh job yang udah
-  28 hari sejak di-Apply — yang paling tua baru ~2 hari (per 6 Agustus).
-  **Cek lagi mulai awal September.**
+28 hari sejak di-Apply — yang paling tua baru ~2 hari (per 6 Agustus).
+**Cek lagi mulai awal September.**
 
 ---
+
+
 
 ## 8. Fase E — Mode Otonom (toggle)
 
 📍 Tab **Perlu Tindakan** → panel toggle **Internal Linking Agent**
 
 - [ ] Pastikan statusnya **NONAKTIF**.
+
 - 🚫 **Jangan dinyalain dulu** — nunggu data Measurement Loop cukup
-  (lihat § 7) sebelum ada keputusan nyalain apa nggak.
+(lihat § 7) sebelum ada keputusan nyalain apa nggak.
 
 ---
+
+
 
 ## 9. Notifikasi Telegram (n8n)
 
@@ -126,6 +156,8 @@ Ini fitur paling baru rilis, prioritas nomor satu buat dicek.
   udah diperbaiki + di-Publish ulang di n8n.
 
 ---
+
+
 
 ## Kalau ada yang error
 

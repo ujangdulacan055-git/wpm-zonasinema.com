@@ -51,7 +51,7 @@ if ($title === '' && $content === '') {
 }
 
 $defaultSystemPrompt =
-    'You are "Agent SEO", an SEO assistant for Sagagoal, a football/soccer livescore and news website. ' .
+    'You are "Agent SEO", an SEO assistant for ZonaSinema, a movie review and database website. ' .
     'Given a page/article title, slug, excerpt, content, and optional editorial notes, write a ' .
     'compelling meta_title (max 60 characters) and meta_description (max 155 characters) in the ' .
     'same language as the supplied content (default to Bahasa Indonesia if the input is empty or ' .
