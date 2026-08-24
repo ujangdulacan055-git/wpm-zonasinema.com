@@ -868,20 +868,33 @@ function wpm_news_byline(array $article): string
 }
 
 /**
- * Big hero card for the top of the news homepage feed — full-width image,
- * bold title below (not overlaid on the image), then source + relative time.
+ * Big hero card for the top of the homepage feed — full-width backdrop
+ * image, title + byline overlaid on the image (gradient bawah), 24 Agu
+ * 2026 revisi: sebelumnya pakai featured_image (poster potret 2:3)
+ * ke-paksa crop ke box 16:9 → hasilnya potongan gambar acak yang gak
+ * jelas (laporan operator). Sekarang prioritas films.backdrop_path
+ * (landscape asli dari TMDb), judul dipindah jadi overlay di atas
+ * gambar (bukan di bawah lagi) biar langsung kebaca film apa.
  */
 function wpm_news_hero_card(array $article): string
 {
-    $img = wpm_image($article['featured_image'] ?? null);
+    $backdropPath = $article['backdrop_path'] ?? null;
+    $img = $backdropPath !== null && $backdropPath !== ''
+        ? 'https://image.tmdb.org/t/p/w1280' . $backdropPath
+        : wpm_image($article['featured_image'] ?? null);
+    $url = wpm_url_artikel((string) $article['slug']);
     $media = $img !== null
         ? '<img src="' . wpm_esc($img) . '" alt="' . wpm_esc((string) $article['title']) . '" loading="lazy">'
         : wpm_icon('news');
 
     $html = '<article class="news-hero">';
-    $html .= '<a class="news-hero__media" href="' . wpm_esc(wpm_url_artikel((string) $article['slug'])) . '">' . $media . '</a>';
-    $html .= '<h2 class="news-hero__title"><a href="' . wpm_esc(wpm_url_artikel((string) $article['slug'])) . '">' . wpm_esc((string) $article['title']) . '</a></h2>';
+    $html .= '<a class="news-hero__media" href="' . wpm_esc($url) . '">';
+    $html .= $media;
+    $html .= '<div class="news-hero__overlay">';
+    $html .= '<h2 class="news-hero__title">' . wpm_esc((string) $article['title']) . '</h2>';
     $html .= '<div class="news-byline">' . wpm_news_byline($article) . '</div>';
+    $html .= '</div>';
+    $html .= '</a>';
     $html .= '</article>';
 
     return $html;

@@ -45,7 +45,7 @@ $page = min($page, $totalPages);
 $offset = ($page - 1) * $perPage;
 
 $listStmt = $pdo->prepare(
-    "SELECT p.*, c.name AS category_name, a.name AS author_name, f.vote_average
+    "SELECT p.*, c.name AS category_name, a.name AS author_name, f.vote_average, f.backdrop_path
      FROM pages p
      LEFT JOIN article_categories c ON c.id = p.category_id
      LEFT JOIN admins a ON a.admin_id = p.author_id
