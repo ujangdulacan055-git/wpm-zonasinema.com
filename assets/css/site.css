@@ -490,9 +490,12 @@ body.crypto-theme {
 
 .zc-genre-bar {
   position: relative; z-index: 1;
-  display: flex; align-items: center; gap: 22px; padding: 12px 24px;
+  display: flex; align-items: center; justify-content: center; gap: 22px; padding: 12px 24px;
   background: linear-gradient(90deg, var(--accent) 0%, #f0a840 100%);
   overflow-x: auto;
+}
+@media (max-width: 980px) {
+  .zc-genre-bar { justify-content: flex-start; }
 }
 .zc-genre-bar a {
   flex-shrink: 0; font-size: 12.5px; font-weight: 800; letter-spacing: 0.04em;
