@@ -48,17 +48,7 @@ $jsVer   = @filemtime($jsPath) ?: 1;
 <html lang="id">
 <head>
     <script>
-      // Set the theme attribute before first paint — no flash/snap between
-      // themes on load. Order: localStorage preference, then OS preference,
-      // then dark (this site's original default look).
-      (function () {
-        var saved = null;
-        try { saved = localStorage.getItem('sagagoal_theme'); } catch (e) {}
-        var theme = saved === 'light' || saved === 'dark'
-          ? saved
-          : (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
-        document.documentElement.setAttribute('data-theme', theme);
-      })();
+      document.documentElement.setAttribute('data-theme', 'dark');
     </script>
     <meta charset="UTF-8">
     <!-- Must come first: makes every relative asset/link on this page
