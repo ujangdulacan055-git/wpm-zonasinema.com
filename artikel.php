@@ -396,7 +396,7 @@ require __DIR__ . '/includes/site-header.php';
                      di bawah. BUKAN player film/streaming provider pihak ketiga. -->
                 <button type="button" class="btn-trailer" data-trailer-key="<?= wpm_esc($filmTrailerKey) ?>" data-trailer-open>
                     <svg viewBox="0 0 24 24" fill="currentColor" width="15" height="15"><path d="M8 5v14l11-7L8 5Z"/></svg>
-                    Tonton Trailer di YouTube
+                    Tonton Trailer
                 </button>
             <?php endif; ?>
         </div>
@@ -424,14 +424,9 @@ require __DIR__ . '/includes/site-header.php';
             <div class="article-layout__main film-body">
                 <?= wpm_render_ad_slot($pdo, 'article-before-title', 'article', $pageId) ?>
 
-                <div class="article-head__meta film-body__byline">
-                    <?php if (!empty($article['category_name'])) : ?>
-                        <a href="<?= wpm_esc(wpm_url_kategori((string) $article['category_slug'])) ?>" class="article-head__category"><?= wpm_esc((string) $article['category_name']) ?></a>
-                    <?php endif; ?>
-                    <?php if (!empty($article['author_name'])) : ?><span><?= wpm_icon('news') ?><?= wpm_esc((string) $article['author_name']) ?></span><?php endif; ?>
-                    <span><?= wpm_icon('clock') ?><?= wpm_esc(wpm_format_date($article['published_at'] ?? null, 'd M Y, H:i')) ?></span>
-                    <span><?= wpm_icon('eye') ?><?= (int) $article['views'] ?> views</span>
-                </div>
+                <!-- Byline artikel berita (author/tanggal/views) DIHAPUS (24 Agu
+                     2026) — sisa dari template berita lama, gak relevan buat
+                     halaman detail film (review & database, bukan artikel jurnalistik). -->
 
                 <?= wpm_render_ad_slot($pdo, 'article-after-title', 'article', $pageId) ?>
                 <?= wpm_render_ad_slot($pdo, 'above-article', 'article', $pageId) ?>
