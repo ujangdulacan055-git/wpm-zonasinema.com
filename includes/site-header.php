@@ -169,7 +169,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
      genre/tahun/terpopuler sekarang beneran filter berbeda di kategori.php,
      bukan semua ke halaman yang sama lagi. -->
 <?php $wpmGenreBarActive = trim((string) ($_GET['genre'] ?? '')); ?>
-<div class="zc-genre-bar">
+<div class="zc-genre-bar"><div class="zc-genre-bar__inner">
     <a href="kategori.php" class="<?= $wpmGenreBarActive === '' && !isset($_GET['year']) && !isset($_GET['popular']) ? 'is-active' : '' ?>">Semua</a>
     <a href="kategori.php?genre=aksi" class="<?= $wpmGenreBarActive === 'aksi' ? 'is-active' : '' ?>">Aksi</a>
     <a href="kategori.php?genre=horror" class="<?= $wpmGenreBarActive === 'horror' ? 'is-active' : '' ?>">Horror</a>
@@ -182,7 +182,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     <a href="kategori.php?year=2025" class="<?= ($_GET['year'] ?? '') === '2025' ? 'is-active' : '' ?>">2025</a>
     <a href="kategori.php?year=2026" class="<?= ($_GET['year'] ?? '') === '2026' ? 'is-active' : '' ?>">2026</a>
     <a href="kategori.php?popular=1" class="<?= isset($_GET['popular']) ? 'is-active' : '' ?>">Terpopuler</a>
-</div>
+</div></div>
 
 <?php
 $wpmBreakingNewsHtml = wpm_breaking_news_markup($pdo);
