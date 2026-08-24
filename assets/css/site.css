@@ -2031,9 +2031,9 @@ a.contact-info-row__value:hover { color: var(--cyan); }
   width: 38px;
   height: 38px;
   border-radius: 10px;
-  background: var(--surface-glass-2);
+  background: var(--accent);   /* 24 Agu 2026: kontras rendah, patch dulu di production, disamain di local */
   border: 1px solid var(--border-glass);
-  color: var(--text);
+  color: #1a1200;               /* 24 Agu 2026: idem */
   font-size: 20px;
   cursor: pointer;
   margin-bottom: 12px;
@@ -2092,6 +2092,19 @@ a.contact-info-row__value:hover { color: var(--cyan); }
   align-items: start;
   padding-bottom: 60px;
 }
+
+/* 24 Agu 2026 fix: mobile horizontal-overflow bug — "gambar aneh di
+   homepage mobile" yang dilaporin operator. Root cause: grid item ini
+   default-nya min-width:auto, dan konten di dalamnya (.poster-slider-wrap,
+   dari fitur slider arrow) punya min-content width segede semua poster
+   card berjejer (~1300px+) walau .poster-slider sendiri overflow-x:auto.
+   Grid track "1fr" di breakpoint mobile (baris @media 640px di bawah,
+   cuma "1fr" polos tanpa minmax(0,...)) ikut kebawa lebar itu, bikin
+   SELURUH halaman (bukan cuma slidernya) overflow horizontal & ke-zoom
+   out otomatis oleh browser mobile. min-width:0 di sini motong rantai
+   "min-content nembus ke atas" itu — .news-hero, poster grid, dst semua
+   ikut ngecil normal sesuai lebar layar. */
+.news-layout__main { min-width: 0; }
 
 /* Sidebar as ONE sticky unit (11 Agu 2026 fix) — trending panel + ad slot
    now both live inside this <aside>. Previously only .trending-panel
