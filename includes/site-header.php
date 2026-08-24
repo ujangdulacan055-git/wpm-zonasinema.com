@@ -63,7 +63,7 @@ $jsVer   = @filemtime($jsPath) ?: 1;
     <meta charset="UTF-8">
     <!-- Must come first: makes every relative asset/link on this page
          resolve against the site root, not the current URL's own depth
-         (needed since clean URLs like /artikel/<slug> sit one segment
+         (needed since clean URLs like /film/<slug> sit one segment
          "deeper" than the old /artikel.php ever did). -->
     <base href="<?= wpm_esc(wpm_base_href()) ?>">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">

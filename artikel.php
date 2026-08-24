@@ -2,11 +2,12 @@
 declare(strict_types=1);
 
 /**
- * Sagagoal — article detail page.
- * Reached via the clean URL /artikel/<slug> (see root .htaccess), which
- * rewrites to this file as ?slug=<slug> under the hood — this file's own
- * logic never changed, only outgoing links now use wpm_url_artikel().
- * Still directly reachable as artikel.php?slug=<slug> too, for old links.
+ * ZonaSinema — Halaman Detail Film.
+ * Reached via the clean URL /film/<slug> (24 Agu 2026, ganti dari
+ * /artikel/ — warisan Sagagoal; see root .htaccess), which rewrites to
+ * this file as ?slug=<slug> under the hood — this file's own logic
+ * never changed, only outgoing links now use wpm_url_artikel(). Still
+ * directly reachable as artikel.php?slug=<slug> too, for old links.
  */
 
 require_once __DIR__ . '/includes/site-bootstrap.php';
@@ -297,11 +298,17 @@ if ($film !== null) {
 // sengaja dikosongin, jangan fabricate nama bioskop/jam tayang.
 $filmDummyCinemas = [];
 
-// Trailer — link-out YouTube doang (BUKAN embed/iframe), dari trailer_youtube_key
-// hasil import TMDb. Fallback "#" kalau film ini nggak punya trailer key.
-$filmTrailerUrl = ($film !== null && !empty($film['trailer_youtube_key']))
-    ? 'https://www.youtube.com/watch?v=' . rawurlencode((string) $film['trailer_youtube_key'])
-    : '#';
+// Trailer — 24 Agu 2026, keputusan operator: REVISI pagar keras WO 003,
+// khusus trailer YouTube RESMI (trailer_youtube_key dari TMDb, videos
+// yang udah divalidasi) sekarang BOLEH dibuka lewat popup/modal embed,
+// bukan cuma link-out. Cakupan ini SEMPIT & KETAT — modal ini CUMA buat
+// trailer promosi durasi pendek, BUKAN pintu ke player film/streaming
+// provider pihak ketiga (Hydrax/Vidstream/dll) dalam bentuk apapun. Iframe
+// YouTube CUMA di-inject ke DOM pas modal dibuka (lihat script di bawah),
+// jadi nol auto-load video pas halaman pertama kali diakses.
+$filmTrailerKey = ($film !== null && !empty($film['trailer_youtube_key']))
+    ? (string) $film['trailer_youtube_key']
+    : null;
 
 /** Inisial 1-2 huruf dari nama, buat avatar bulat dummy cast & crew. */
 $wpmInitials = static function (string $name): string {
@@ -383,11 +390,15 @@ require __DIR__ . '/includes/site-header.php';
                 <?php endforeach; ?>
             </div>
 
-            <!-- Link-out doang ke YouTube — BUKAN embed/player. Nol iframe/streaming di halaman ini. -->
-            <a href="<?= wpm_esc($filmTrailerUrl) ?>" target="_blank" rel="noopener" class="btn-trailer">
-                <svg viewBox="0 0 24 24" fill="currentColor" width="15" height="15"><path d="M8 5v14l11-7L8 5Z"/></svg>
-                Tonton Trailer di YouTube
-            </a>
+            <?php if ($filmTrailerKey !== null) : ?>
+                <!-- Modal embed trailer YouTube RESMI doang (24 Agu 2026, revisi
+                     operator) — iframe cuma di-inject pas dibuka, lihat #trailer-modal
+                     di bawah. BUKAN player film/streaming provider pihak ketiga. -->
+                <button type="button" class="btn-trailer" data-trailer-key="<?= wpm_esc($filmTrailerKey) ?>" data-trailer-open>
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="15" height="15"><path d="M8 5v14l11-7L8 5Z"/></svg>
+                    Tonton Trailer di YouTube
+                </button>
+            <?php endif; ?>
         </div>
     </div>
 </section>
@@ -565,6 +576,61 @@ require __DIR__ . '/includes/site-header.php';
         </div>
     </div>
 </section>
+
+<?php if ($filmTrailerKey !== null) : ?>
+<!-- Modal trailer YouTube (24 Agu 2026, revisi operator — lihat komentar
+     di atas dekat $filmTrailerKey). Iframe TIDAK ada di DOM sampai modal
+     dibuka (JS inject src pas open, hapus pas close) — nol auto-load,
+     nol elemen video nempel pas halaman pertama diakses. CUMA buat
+     trailer YouTube resmi, bukan player film/streaming apapun. -->
+<div class="trailer-modal" id="trailer-modal" role="dialog" aria-modal="true" aria-label="Trailer film" hidden>
+    <div class="trailer-modal__backdrop" data-trailer-close></div>
+    <div class="trailer-modal__panel">
+        <button type="button" class="trailer-modal__close" data-trailer-close aria-label="Tutup trailer">&times;</button>
+        <div class="trailer-modal__frame" id="trailer-modal-frame"></div>
+    </div>
+</div>
+<script>
+(function () {
+    var modal = document.getElementById('trailer-modal');
+    var frame = document.getElementById('trailer-modal-frame');
+    if (!modal || !frame) { return; }
+
+    function openModal(key) {
+        // Src cuma di-set pas dibuka — sengaja gak taruh iframe statis di
+        // markup, biar YouTube nol nge-load apapun sebelum user niat nonton.
+        var iframe = document.createElement('iframe');
+        iframe.src = 'https://www.youtube.com/embed/' + encodeURIComponent(key) + '?autoplay=1';
+        iframe.title = 'Trailer YouTube';
+        iframe.setAttribute('allow', 'autoplay; encrypted-media; picture-in-picture');
+        iframe.setAttribute('allowfullscreen', '');
+        iframe.setAttribute('frameborder', '0');
+        frame.appendChild(iframe);
+        modal.hidden = false;
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal() {
+        modal.hidden = true;
+        frame.innerHTML = ''; // hapus iframe -> video ke-stop, bukan cuma disembunyiin
+        document.body.style.overflow = '';
+    }
+
+    document.querySelectorAll('[data-trailer-open]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var key = btn.getAttribute('data-trailer-key');
+            if (key) { openModal(key); }
+        });
+    });
+    document.querySelectorAll('[data-trailer-close]').forEach(function (el) {
+        el.addEventListener('click', closeModal);
+    });
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && !modal.hidden) { closeModal(); }
+    });
+})();
+</script>
+<?php endif; ?>
 
 </main>
 <?php require __DIR__ . '/includes/site-footer.php'; ?>

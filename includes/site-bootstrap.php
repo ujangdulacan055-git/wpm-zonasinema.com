@@ -205,7 +205,7 @@ function wpm_image(?string $path): ?string
  * Reads $_SERVER['SCRIPT_NAME'], which PHP/Apache always resolve to the
  * PHYSICAL script that actually ran (e.g. "/wpm/artikel.php") even when
  * the request came in through a rewritten clean URL like
- * "/wpm/artikel/some-slug" — so this stays correct under both.
+ * "/wpm/film/some-slug" — so this stays correct under both.
  */
 function wpm_base_path(): string
 {
@@ -225,10 +225,10 @@ function wpm_site_url(string $path = ''): string
  * Absolute <base href> for the current page — makes every relative link,
  * asset src, and form action on the page resolve against the SITE ROOT
  * instead of the current URL's own path. Needed because clean URLs like
- * /artikel/<slug> put the browser one path segment "deeper" than the old
+ * /film/<slug> put the browser one path segment "deeper" than the old
  * /artikel.php?slug=... ever was, which otherwise breaks every relative
  * asset path (assets/css/site.css would resolve to
- * /artikel/assets/css/site.css instead of /assets/css/site.css). Emitted
+ * /film/assets/css/site.css instead of /assets/css/site.css). Emitted
  * as the very first thing in <head> in includes/site-header.php.
  */
 function wpm_base_href(): string
@@ -245,9 +245,13 @@ function wpm_base_href(): string
  * the domain root (production) or a subfolder (local dev) — same
  * portability approach the rewrite rules themselves use.
  */
+/** Halaman Detail Film — /film/<slug> (24 Agu 2026, ganti dari /artikel/,
+ * warisan Sagagoal/berita olahraga, gak cocok buat situs review film.
+ * Nama fungsi & file fisik artikel.php sengaja gak diubah, cuma path
+ * publiknya — lihat .htaccess buat rewrite rule-nya). */
 function wpm_url_artikel(string $slug): string
 {
-    return 'artikel/' . rawurlencode($slug);
+    return 'film/' . rawurlencode($slug);
 }
 
 /** Berita listing — /berita, or /berita/kategori/<slug> for one category. */

@@ -84,8 +84,11 @@
     RewriteRule ^football/([0-9]{4}-[0-9]{2}-[0-9]{2})/?$ football.php?date=$1 [L,QSA]
     RewriteRule ^basket/([0-9]{4}-[0-9]{2}-[0-9]{2})/?$ basket.php?date=$1 [L,QSA]
 
-    # /artikel/<slug> -> artikel.php?slug=<slug>
-    RewriteRule ^artikel/([^/]+)/?$ artikel.php?slug=$1 [L,QSA]
+    # /film/<slug> -> artikel.php?slug=<slug> (24 Agu 2026: ganti dari
+    # /artikel/, warisan Sagagoal — file fisik artikel.php sengaja gak
+    # di-rename, cuma path publiknya. robots.txt masih Disallow: / pas ini
+    # diganti, jadi /artikel/... lama belum pernah ke-index, gak perlu 301.)
+    RewriteRule ^film/([^/]+)/?$ artikel.php?slug=$1 [L,QSA]
 
     # /berita/tag/<slug> -> kategori.php?tag=<slug>
     RewriteRule ^berita/tag/([^/]+)/?$ kategori.php?tag=$1 [L,QSA]

@@ -2,8 +2,8 @@
 declare(strict_types=1);
 
 /**
- * Sagagoal — public search results page. /pencarian.php?q=bitcoin
- * Searches published articles only (title, excerpt, content).
+ * ZonaSinema — public search results page. /pencarian.php?q=dune
+ * Searches published pages (film) only (title, excerpt, content).
  */
 
 require_once __DIR__ . '/includes/site-bootstrap.php';
@@ -29,9 +29,10 @@ if (mb_strlen($query) >= 2) {
     $offset = ($page - 1) * $perPage;
 
     $listStmt = $pdo->prepare(
-        "SELECT p.*, c.name AS category_name
+        "SELECT p.*, c.name AS category_name, f.vote_average
          FROM pages p
          LEFT JOIN article_categories c ON c.id = p.category_id
+         LEFT JOIN films f ON f.page_id = p.page_id
          WHERE p.status = 'published' AND (p.title LIKE :q1 OR p.excerpt LIKE :q2 OR p.content LIKE :q3)
          ORDER BY p.published_at DESC
          LIMIT $perPage OFFSET $offset"
@@ -52,9 +53,9 @@ require __DIR__ . '/includes/site-header.php';
     <div class="crypto-container">
         <nav class="breadcrumb" aria-label="Breadcrumb"><a href="<?= wpm_esc(wpm_site_url('')) ?>">Beranda</a> <span>/</span> Pencarian</nav>
         <span class="section-kicker">Cari</span>
-        <h1>Cari Artikel</h1>
+        <h1>Cari Film</h1>
         <form class="search-form" method="get" action="<?= wpm_esc(wpm_url_pencarian()) ?>">
-            <input type="search" name="q" value="<?= wpm_esc($query) ?>" placeholder="Cari berita bola, tim, atau topik lainnya..." minlength="2" required>
+            <input type="search" name="q" value="<?= wpm_esc($query) ?>" placeholder="Cari judul film, aktor, atau genre..." minlength="2" required>
             <button type="submit"><?= wpm_icon('search') ?></button>
         </form>
     </div>
@@ -70,9 +71,9 @@ require __DIR__ . '/includes/site-header.php';
             <div class="empty-state"><?= wpm_icon('search') ?><p>Tidak ada hasil untuk "<?= wpm_esc($query) ?>".</p></div>
         <?php else : ?>
             <p style="color:var(--text-muted);margin-bottom:24px;"><?= (int) $totalArticles ?> hasil untuk "<?= wpm_esc($query) ?>"</p>
-            <div class="crypto-grid crypto-grid--3">
+            <div class="poster-grid">
                 <?php foreach ($articles as $article) : ?>
-                    <?= wpm_article_card($article) ?>
+                    <?= wpm_poster_card($article) ?>
                 <?php endforeach; ?>
             </div>
             <?php if ($totalPages > 1) : ?>
