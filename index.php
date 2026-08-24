@@ -17,17 +17,25 @@ require_once __DIR__ . '/includes/site-bootstrap.php';
 // Tab kedua diganti dari "Untuk Anda" jadi "Terpopuler" (24 Agu 2026) —
 // "Untuk Anda" itu pola personalized-feed khas portal berita/livescore
 // (butuh sistem rekomendasi yang gak ada), gak masuk akal buat situs
-// database film. "Terpopuler" (urut films.popularity dari TMDb) lebih
-// relevan, mirip pola IMDb/Letterboxd.
+// database film. "Terpopuler" urut dari rating (films.vote_average) —
+// direvisi (24 Agu 2026, permintaan operator) dari films.popularity
+// (metrik TMDb, gak intuitif buat pengunjung) ke rating asli film,
+// mirip pola IMDb/Letterboxd.
 $tab = ($_GET['tab'] ?? '') === 'terpopuler' ? 'terpopuler' : 'terbaru';
 $page = max(1, (int) ($_GET['page'] ?? 1));
 $perPage = 10;
 
 $where = "p.status = 'published'";
 $queryParams = [];
+// "Terbaru" diurutkan dari films.release_date (tanggal rilis film
+// beneran) — direvisi (24 Agu 2026) dari p.created_at (waktu row
+// ke-insert/import ke DB kita, BUKAN kapan film-nya rilis — bikin
+// urutan "Terbaru" gak nyambung sama tanggal rilis asli pas import
+// TMDb baru dijalanin belakangan). Fallback ke p.created_at kalau film
+// belum punya release_date (jaga-jaga data lama/non-TMDb).
 $orderBy = $tab === 'terbaru'
-    ? 'p.created_at DESC'
-    : '(SELECT f.popularity FROM films f WHERE f.page_id = p.page_id) DESC';
+    ? 'COALESCE((SELECT f.release_date FROM films f WHERE f.page_id = p.page_id), p.created_at) DESC'
+    : '(SELECT f.vote_average FROM films f WHERE f.page_id = p.page_id) DESC';
 
 $countStmt = $pdo->prepare("SELECT COUNT(*) FROM pages p WHERE $where");
 $countStmt->execute($queryParams);
