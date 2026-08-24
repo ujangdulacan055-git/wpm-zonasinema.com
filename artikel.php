@@ -583,12 +583,23 @@ require __DIR__ . '/includes/site-header.php';
     <div class="trailer-modal__panel">
         <button type="button" class="trailer-modal__close" data-trailer-close aria-label="Tutup trailer">&times;</button>
         <div class="trailer-modal__frame" id="trailer-modal-frame"></div>
+        <!-- Fallback link (24 Agu 2026) — sebagian trailer resmi studio
+             sengaja di-disable embedding-nya oleh channel pemilik (video-nya
+             sah, cuma gak bisa ke-embed di iframe manapun, bukan cuma di
+             situs ini). Iframe YouTube gak ngasih sinyal JS yang bisa
+             dideteksi buat kasus ini (errornya di-render YouTube sendiri di
+             dalam iframe), jadi link "Tonton di YouTube" ini SELALU
+             ditampilin sebagai jalan keluar, bukan cuma pas gagal. -->
+        <a class="trailer-modal__fallback" id="trailer-modal-fallback" href="#" target="_blank" rel="noopener noreferrer">
+            Video gak muncul? Tonton langsung di YouTube ↗
+        </a>
     </div>
 </div>
 <script>
 (function () {
     var modal = document.getElementById('trailer-modal');
     var frame = document.getElementById('trailer-modal-frame');
+    var fallback = document.getElementById('trailer-modal-fallback');
     if (!modal || !frame) { return; }
 
     function openModal(key) {
@@ -601,6 +612,7 @@ require __DIR__ . '/includes/site-header.php';
         iframe.setAttribute('allowfullscreen', '');
         iframe.setAttribute('frameborder', '0');
         frame.appendChild(iframe);
+        if (fallback) { fallback.href = 'https://www.youtube.com/watch?v=' + encodeURIComponent(key); }
         modal.hidden = false;
         document.body.style.overflow = 'hidden';
     }
