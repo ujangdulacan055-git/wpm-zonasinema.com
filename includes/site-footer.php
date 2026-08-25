@@ -96,7 +96,6 @@ $stickyAd = (empty($adSettings) || ((int) ($adSettings['ads_enabled'] ?? 1) === 
                 <?php endforeach; ?>
             </div>
         </details>
-        <a href="berita.php" class="<?= ($activeNav ?? '') === 'berita-tips' ? 'is-active' : '' ?>">Berita &amp; Tips</a>
         <details class="nav-dropdown">
             <summary>Tahun Rilis
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M6 9l6 6 6-6"/></svg>
@@ -110,6 +109,7 @@ $stickyAd = (empty($adSettings) || ((int) ($adSettings['ads_enabled'] ?? 1) === 
                 <?php endforeach; ?>
             </div>
         </details>
+        <a href="berita.php" class="<?= ($activeNav ?? '') === 'berita-tips' ? 'is-active' : '' ?>">Berita &amp; Tips</a>
         <a href="request-film.php" class="<?= ($activeNav ?? '') === 'request-film' ? 'is-active' : '' ?>">Request Movie</a>
     </div>
 </div>

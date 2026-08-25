@@ -151,7 +151,6 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
                         <?php endforeach; ?>
                     </div>
                 </details>
-                <a href="berita.php" class="<?= ($activeNav ?? '') === 'berita-tips' ? 'is-active' : '' ?>">Berita &amp; Tips</a>
                 <!-- Dropdown Tahun Rilis (24 Agu 2026) — isi dari $wpmNavYears
                      (query DISTINCT YEAR(release_date) dari films, dinamis
                      sesuai data yang beneran ada, bukan hardcode range). -->
@@ -168,6 +167,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
                         <?php endforeach; ?>
                     </div>
                 </details>
+                <a href="berita.php" class="<?= ($activeNav ?? '') === 'berita-tips' ? 'is-active' : '' ?>">Berita &amp; Tips</a>
                 <!-- Ganti dari toggle Mode Gelap (24 Agu 2026, brief
                      GANTI-DARKMODE-KE-REQUEST-MOVIE) — tema gelap/terang
                      tetap jalan otomatis (localStorage/prefers-color-scheme,
