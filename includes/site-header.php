@@ -25,6 +25,12 @@ $activeNav = $activeNav ?? '';
 $currentYear = date('Y');
 $wpmMenu = wpm_nav_menu($pdo);
 
+// Dropdown nav "Genre" & "Tahun Rilis" (24 Agu 2026) — dihitung sekali di
+// sini, dipakai ulang di site-footer.php buat mobile drawer (sama pola
+// kayak $wpmSiteSettings), biar query film_genres/films gak dobel.
+$wpmNavGenres = wpm_film_genres_for_nav($pdo);
+$wpmNavYears = wpm_film_years_for_nav($pdo);
+
 // Site branding — falls back to the original hardcoded defaults whenever
 // the admin hasn't filled in Site Settings yet (or a field is left blank),
 // so the site never shows an empty name/tagline.
@@ -131,13 +137,37 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 
         <div class="zc-nav__right">
             <nav class="zc-nav-links" aria-label="Menu utama">
-                <a href="<?= wpm_esc(wpm_url_kategori()) ?>" class="<?= $activeNav === 'berita' ? 'is-active' : '' ?>">Genre
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M6 9l6 6 6-6"/></svg>
-                </a>
-                <a href="<?= wpm_esc(wpm_url_kategori()) ?>">Populer</a>
-                <a href="<?= wpm_esc(wpm_url_kategori()) ?>">Tahun Rilis
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M6 9l6 6 6-6"/></svg>
-                </a>
+                <!-- Dropdown Genre (24 Agu 2026) — <details>/<summary> native,
+                     toggle jalan di desktop & mobile tanpa JS custom. Isi dari
+                     $wpmNavGenres (query film_genres, lihat site-header.php atas). -->
+                <details class="nav-dropdown">
+                    <summary class="<?= $activeNav === 'berita' ? 'is-active' : '' ?>">Genre
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M6 9l6 6 6-6"/></svg>
+                    </summary>
+                    <div class="nav-dropdown__panel">
+                        <a href="kategori.php" class="<?= ($_GET['genre'] ?? '') === '' ? 'is-active' : '' ?>">Semua Genre</a>
+                        <?php foreach ($wpmNavGenres as $g) : ?>
+                            <a href="kategori.php?genre=<?= wpm_esc((string) $g['slug']) ?>" class="<?= ($_GET['genre'] ?? '') === $g['slug'] ? 'is-active' : '' ?>"><?= wpm_esc((string) $g['label_id']) ?></a>
+                        <?php endforeach; ?>
+                    </div>
+                </details>
+                <a href="berita.php" class="<?= ($activeNav ?? '') === 'berita-tips' ? 'is-active' : '' ?>">Berita &amp; Tips</a>
+                <!-- Dropdown Tahun Rilis (24 Agu 2026) — isi dari $wpmNavYears
+                     (query DISTINCT YEAR(release_date) dari films, dinamis
+                     sesuai data yang beneran ada, bukan hardcode range). -->
+                <details class="nav-dropdown">
+                    <summary>Tahun Rilis
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M6 9l6 6 6-6"/></svg>
+                    </summary>
+                    <div class="nav-dropdown__panel">
+                        <?php if ($wpmNavYears === []) : ?>
+                            <span class="nav-dropdown__empty">Belum ada data tahun</span>
+                        <?php endif; ?>
+                        <?php foreach ($wpmNavYears as $year) : ?>
+                            <a href="kategori.php?year=<?= (int) $year ?>" class="<?= (string) ($_GET['year'] ?? '') === (string) $year ? 'is-active' : '' ?>"><?= (int) $year ?></a>
+                        <?php endforeach; ?>
+                    </div>
+                </details>
                 <!-- Ganti dari toggle Mode Gelap (24 Agu 2026, brief
                      GANTI-DARKMODE-KE-REQUEST-MOVIE) — tema gelap/terang
                      tetap jalan otomatis (localStorage/prefers-color-scheme,

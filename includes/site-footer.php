@@ -84,10 +84,32 @@ $stickyAd = (empty($adSettings) || ((int) ($adSettings['ads_enabled'] ?? 1) === 
 <div class="crypto-nav__mobile" id="crypto-nav-mobile">
     <div class="crypto-nav__mobile-panel">
         <button type="button" class="crypto-nav__mobile-close" id="crypto-nav-mobile-close" aria-label="Tutup menu">&times;</button>
-        <?php /* Sama persis dengan nav desktop (.zc-nav-links) di site-header.php — lihat CLAUDE.md soal placeholder genre film. */ ?>
-        <a href="<?= wpm_esc(wpm_url_kategori()) ?>" class="<?= ($activeNav ?? '') === 'berita' ? 'is-active' : '' ?>">Genre</a>
-        <a href="<?= wpm_esc(wpm_url_kategori()) ?>">Populer</a>
-        <a href="<?= wpm_esc(wpm_url_kategori()) ?>">Tahun Rilis</a>
+        <?php /* Sama persis dengan nav desktop (.zc-nav-links) di site-header.php — $wpmNavGenres/$wpmNavYears dihitung di situ, dipakai ulang di sini. */ ?>
+        <details class="nav-dropdown">
+            <summary class="<?= ($activeNav ?? '') === 'berita' ? 'is-active' : '' ?>">Genre
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M6 9l6 6 6-6"/></svg>
+            </summary>
+            <div class="nav-dropdown__panel">
+                <a href="kategori.php" class="<?= ($_GET['genre'] ?? '') === '' ? 'is-active' : '' ?>">Semua Genre</a>
+                <?php foreach ($wpmNavGenres as $g) : ?>
+                    <a href="kategori.php?genre=<?= wpm_esc((string) $g['slug']) ?>" class="<?= ($_GET['genre'] ?? '') === $g['slug'] ? 'is-active' : '' ?>"><?= wpm_esc((string) $g['label_id']) ?></a>
+                <?php endforeach; ?>
+            </div>
+        </details>
+        <a href="berita.php" class="<?= ($activeNav ?? '') === 'berita-tips' ? 'is-active' : '' ?>">Berita &amp; Tips</a>
+        <details class="nav-dropdown">
+            <summary>Tahun Rilis
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M6 9l6 6 6-6"/></svg>
+            </summary>
+            <div class="nav-dropdown__panel">
+                <?php if ($wpmNavYears === []) : ?>
+                    <span class="nav-dropdown__empty">Belum ada data tahun</span>
+                <?php endif; ?>
+                <?php foreach ($wpmNavYears as $year) : ?>
+                    <a href="kategori.php?year=<?= (int) $year ?>" class="<?= (string) ($_GET['year'] ?? '') === (string) $year ? 'is-active' : '' ?>"><?= (int) $year ?></a>
+                <?php endforeach; ?>
+            </div>
+        </details>
         <a href="request-film.php" class="<?= ($activeNav ?? '') === 'request-film' ? 'is-active' : '' ?>">Request Movie</a>
     </div>
 </div>

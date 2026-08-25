@@ -260,6 +260,41 @@ function wpm_url_kategori(?string $slug = null): string
     return ($slug !== null && $slug !== '') ? 'berita/kategori/' . rawurlencode($slug) : 'berita';
 }
 
+/**
+ * 8 genre film buat dropdown nav "Genre" (24 Agu 2026) — query dari
+ * film_genres, BUKAN hardcode array, biar otomatis ikut kalau genre
+ * ditambah/diedit dari DB nanti. Dipakai bareng di desktop nav
+ * (site-header.php) & mobile drawer (site-footer.php) — dihitung sekali
+ * di site-header.php, variabelnya kepake ulang di site-footer.php (sama
+ * pola kayak $wpmSiteSettings).
+ */
+function wpm_film_genres_for_nav(PDO $pdo): array
+{
+    try {
+        return $pdo->query('SELECT slug, label_id FROM film_genres ORDER BY label_id ASC')->fetchAll();
+    } catch (Throwable $e) {
+        return [];
+    }
+}
+
+/**
+ * Tahun rilis yang BENERAN ada film-nya di DB, buat dropdown nav "Tahun
+ * Rilis" (24 Agu 2026) — dinamis dari films.release_date, JANGAN hardcode
+ * range tahun. Kalau data film nambah/variasi tahunnya melebar (lihat
+ * scripts/import-tmdb.php), dropdown ini otomatis ikut ke-update.
+ */
+function wpm_film_years_for_nav(PDO $pdo): array
+{
+    try {
+        $rows = $pdo->query(
+            'SELECT DISTINCT YEAR(release_date) AS yr FROM films WHERE release_date IS NOT NULL ORDER BY yr DESC'
+        )->fetchAll(PDO::FETCH_COLUMN);
+        return array_map('intval', $rows);
+    } catch (Throwable $e) {
+        return [];
+    }
+}
+
 /** Berita listing filtered by tag — /berita/tag/<slug>. */
 function wpm_url_tag(string $slug): string
 {

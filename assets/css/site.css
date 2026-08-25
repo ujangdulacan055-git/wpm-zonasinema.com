@@ -481,6 +481,44 @@ body.crypto-theme {
 .zc-nav-links a svg { width: 11px; height: 11px; }
 .zc-nav-links a:hover { color: #fff; }
 
+/* Dropdown Genre & Tahun Rilis (24 Agu 2026) — <details>/<summary> native,
+   dipakai di desktop nav (.zc-nav-links) DAN mobile drawer
+   (.crypto-nav__mobile-panel). Base rules di sini netral buat kedua
+   konteks; posisi absolute cuma di-scope ke desktop (.zc-nav-links), lihat
+   di bawah — di mobile drawer panelnya ngalir normal (block) di dalam
+   flex column drawer, gak perlu override apa-apa. */
+.nav-dropdown { position: relative; }
+.nav-dropdown summary {
+  display: flex; align-items: center; gap: 5px; cursor: pointer;
+  list-style: none; color: rgba(255, 255, 255, 0.92); font-weight: 700; font-size: 14px;
+}
+.nav-dropdown summary::-webkit-details-marker { display: none; }
+.nav-dropdown summary:hover { color: #fff; }
+.nav-dropdown summary svg { width: 11px; height: 11px; transition: transform 0.15s ease; }
+.nav-dropdown[open] summary svg { transform: rotate(180deg); }
+.nav-dropdown summary.is-active { color: var(--accent); }
+
+.nav-dropdown__panel {
+  display: flex; flex-direction: column; gap: 2px;
+  background: var(--bg-deep-2); border: 1px solid var(--border-glass); border-radius: var(--radius-md);
+  padding: 8px; margin-top: 8px;
+}
+.nav-dropdown__panel a {
+  padding: 8px 12px; border-radius: 8px; font-size: 13px; font-weight: 600;
+  color: var(--text-muted, rgba(255,255,255,0.75)); white-space: nowrap;
+}
+.nav-dropdown__panel a:hover { background: var(--surface-glass-2); color: #fff; }
+.nav-dropdown__panel a.is-active { color: var(--accent); background: var(--surface-glass-2); }
+.nav-dropdown__empty { padding: 8px 12px; font-size: 13px; color: var(--text-faint); }
+
+/* Desktop only: panel jadi popover melayang di bawah trigger. Di mobile
+   drawer (.crypto-nav__mobile-panel .nav-dropdown), biarin default block
+   (ngalir normal di antara link lain di drawer). */
+.zc-nav-links .nav-dropdown__panel {
+  position: absolute; top: 100%; left: 0; z-index: 50; min-width: 180px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+}
+
 .nav-link--request {
   background: var(--accent); color: #1a1206 !important; padding: 7px 14px; border-radius: 999px; font-weight: 800;
 }
@@ -2104,6 +2142,19 @@ a.contact-info-row__value:hover { color: var(--cyan); }
   font-weight: 500;
   color: var(--text-muted);
 }
+
+/* Dropdown Genre/Tahun Rilis di drawer mobile — summary disamain sama
+   styling link drawer lainnya (24 Agu 2026), bukan style navy desktop. */
+.crypto-nav__mobile-panel .nav-dropdown summary {
+  padding: 14px 12px; border-radius: 12px; font-size: 15.5px; font-weight: 500;
+  color: var(--text-muted);
+}
+.crypto-nav__mobile-panel .nav-dropdown summary:hover,
+.crypto-nav__mobile-panel .nav-dropdown summary.is-active {
+  background: rgba(var(--accent-rgb), 0.14);
+  color: var(--text);
+}
+.crypto-nav__mobile-panel .nav-dropdown__panel { margin-top: 4px; margin-bottom: 4px; }
 
 .crypto-nav__mobile-panel a:hover,
 .crypto-nav__mobile-panel a.is-active {
