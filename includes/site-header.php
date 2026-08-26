@@ -53,6 +53,15 @@ $jsVer   = @filemtime($jsPath) ?: 1;
 <!DOCTYPE html>
 <html lang="id">
 <head>
+    <!-- Google Tag Manager (26 Agu 2026, container asli operator) —
+         ditaruh setinggi mungkin di <head> sesuai rekomendasi resmi
+         Google, sebelum script lain. -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-5BFP2D3P');</script>
+    <!-- End Google Tag Manager -->
     <script>
       document.documentElement.setAttribute('data-theme', 'dark');
     </script>
@@ -109,13 +118,16 @@ $jsVer   = @filemtime($jsPath) ?: 1;
       gtag('config', 'G-1G3ZCPFR6F');
     </script>
 
-    <!-- Google Tag Manager — SENGAJA DILEPAS SEMENTARA (26 Agu 2026).
-         Container ID lama (GTM-PSSVTMGS) bukan punya operator (placeholder
-         dari sesi devs sebelumnya, ID Google Tag Manager account orang
-         lain) — jangan dipasang lagi sampai operator bikin container GTM
-         sendiri dan kasih ID yang bener. Lihat docs/ROADMAP.md. -->
+    <!-- Google Tag Manager (26 Agu 2026): container ID lama (GTM-PSSVTMGS,
+         placeholder dari sesi devs sebelumnya, bukan punya operator) sudah
+         diganti container asli operator (GTM-5BFP2D3P) — lihat script GTM
+         di paling atas <head>. -->
 </head>
 <body class="crypto-theme">
+<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-5BFP2D3P"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
 <div class="crypto-bg" aria-hidden="true"></div>
 
 <header class="zc-nav">
