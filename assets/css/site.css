@@ -553,6 +553,13 @@ body.crypto-theme {
 /* Poster slider (homepage "Film Terbaru" strip, reuses article cards as posters) */
 .poster-slider__head { display: flex; align-items: baseline; justify-content: space-between; margin: 32px 0 16px; }
 .poster-slider__head h2 { font-family: var(--font-display); font-size: 24px; letter-spacing: 0.02em; margin: 0; }
+/* Tombol "Semua Film" tiap row genre (24 Agu 2026) — kuning/gold,
+   konsisten sama tombol "Request Movie" & aksen situs lainnya. */
+.poster-slider__more {
+  flex-shrink: 0; font-size: 13px; font-weight: 800; color: var(--accent);
+  padding: 6px 4px;
+}
+.poster-slider__more:hover { color: var(--accent-hover, var(--accent)); text-decoration: underline; }
 
 .poster-slider { display: flex; gap: 16px; overflow-x: auto; scroll-snap-type: x proximity; padding-bottom: 8px; scroll-behavior: smooth; }
 

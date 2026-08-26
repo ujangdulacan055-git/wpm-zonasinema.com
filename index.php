@@ -45,7 +45,7 @@ $page = min($page, $totalPages);
 $offset = ($page - 1) * $perPage;
 
 $listStmt = $pdo->prepare(
-    "SELECT p.*, c.name AS category_name, a.name AS author_name, f.vote_average, f.backdrop_path
+    "SELECT p.*, c.name AS category_name, a.name AS author_name, f.vote_average, f.backdrop_path, f.release_date
      FROM pages p
      LEFT JOIN article_categories c ON c.id = p.category_id
      LEFT JOIN admins a ON a.admin_id = p.author_id
@@ -75,6 +75,84 @@ $trendingStmt = $pdo->query(
      LIMIT 10"
 );
 $trendingArticles = $trendingStmt->fetchAll();
+
+/* ── Row per genre gaya Netflix (24 Agu 2026, permintaan operator) —
+ * di BAWAH hero+tab+sidebar yang existing (bukan gantiin), full-width,
+ * masing-masing row query terpisah + LIMIT, NOL pagination (scroll
+ * horizontal doang, "Semua Film" ngarah ke kategori.php yang tetap
+ * pakai pagination di situ). Row kosong (genre belum ada film) di-skip
+ * total, nggak nongol section kosong.
+ *
+ * Perf note: kolom yang di-WHERE/ORDER BY di sini (films.release_date,
+ * films.vote_average, film_genre_map.genre_id) belum ada index khusus
+ * di skema existing (cuma PK/unique key page_id & tmdb_id) — di tabel
+ * ~50 baris sekarang dampaknya nol, tapi kalau film udah ribuan baris
+ * worth ditambahin index nanti (bukan blocker sekarang, sengaja gak
+ * bikin migration index baru di luar scope brief ini). */
+$wpmHomeRows = [];
+$wpmHomeRowLimit = 14;
+
+$rowLatestStmt = $pdo->prepare(
+    "SELECT p.*, f.vote_average
+     FROM pages p
+     LEFT JOIN films f ON f.page_id = p.page_id
+     WHERE p.status = 'published'
+     ORDER BY COALESCE(f.release_date, p.created_at) DESC
+     LIMIT $wpmHomeRowLimit"
+);
+$rowLatestStmt->execute();
+$wpmRowLatestItems = $rowLatestStmt->fetchAll();
+if ($wpmRowLatestItems !== []) {
+    $wpmHomeRows[] = ['title' => 'Film Terbaru', 'items' => $wpmRowLatestItems, 'moreUrl' => 'kategori.php'];
+}
+
+$wpmGenreRowDefs = [
+    ['slug' => 'aksi', 'title' => 'Action Terbaru'],
+    ['slug' => 'horror', 'title' => 'Horror Terbaru'],
+    ['slug' => 'komedi', 'title' => 'Komedi Terbaru'],
+    ['slug' => 'romansa', 'title' => 'Romance Terbaru'],
+];
+$rowGenreStmt = $pdo->prepare(
+    "SELECT p.*, f.vote_average
+     FROM pages p
+     JOIN films f ON f.page_id = p.page_id
+     JOIN film_genre_map fgm ON fgm.film_id = f.id
+     JOIN film_genres fg ON fg.id = fgm.genre_id
+     WHERE p.status = 'published' AND fg.slug = :slug
+     ORDER BY f.release_date DESC
+     LIMIT $wpmHomeRowLimit"
+);
+foreach ($wpmGenreRowDefs as $wpmGenreRowDef) {
+    $rowGenreStmt->execute(['slug' => $wpmGenreRowDef['slug']]);
+    $wpmGenreRowItems = $rowGenreStmt->fetchAll();
+    if ($wpmGenreRowItems === []) {
+        continue; // genre belum ada film — skip total, jangan nongol section kosong
+    }
+    $wpmHomeRows[] = [
+        'title' => $wpmGenreRowDef['title'],
+        'items' => $wpmGenreRowItems,
+        'moreUrl' => 'kategori.php?genre=' . $wpmGenreRowDef['slug'],
+    ];
+}
+
+// "Film Lawas" = release_date < 2020-01-01 (definisi operator), urut
+// vote_average DESC biar yang muncul film lawas rating bagus dulu,
+// bukan random. Nol tombol "Semua Film" — kategori.php belum punya
+// filter "sebelum tahun X", sengaja gak dipaksain bikin filter baru di
+// luar scope brief ini, row-nya tetap tampil tanpa tombol itu.
+$rowOldStmt = $pdo->prepare(
+    "SELECT p.*, f.vote_average
+     FROM pages p
+     JOIN films f ON f.page_id = p.page_id
+     WHERE p.status = 'published' AND f.release_date < '2020-01-01'
+     ORDER BY f.vote_average DESC
+     LIMIT $wpmHomeRowLimit"
+);
+$rowOldStmt->execute();
+$wpmRowOldItems = $rowOldStmt->fetchAll();
+if ($wpmRowOldItems !== []) {
+    $wpmHomeRows[] = ['title' => 'Film Lawas', 'items' => $wpmRowOldItems, 'moreUrl' => null];
+}
 
 /* ── Promo banners (cms-admin/pages/banners.php), placement="home" ── */
 $homeBanners = wpm_banners_active($pdo, 'home');
@@ -182,6 +260,34 @@ require __DIR__ . '/includes/site-header.php';
             </aside>
         </div>
     </div>
+
+    <!-- ══════════ ROW PER GENRE (gaya Netflix, 24 Agu 2026) — full-width,
+         reuse .poster-slider-wrap yang sama kayak "Film Terbaru" di atas,
+         JS scroll-nya (di bawah file ini) udah otomatis kepake ke semua
+         row lewat querySelectorAll, nol perubahan JS diperlukan. ══════════ -->
+    <?php foreach ($wpmHomeRows as $wpmHomeRow) : ?>
+    <div class="crypto-container">
+        <div class="poster-slider__head">
+            <h2><?= wpm_esc($wpmHomeRow['title']) ?></h2>
+            <?php if ($wpmHomeRow['moreUrl'] !== null) : ?>
+                <a class="poster-slider__more" href="<?= wpm_esc($wpmHomeRow['moreUrl']) ?>">Semua Film</a>
+            <?php endif; ?>
+        </div>
+        <div class="poster-slider-wrap">
+            <button type="button" class="poster-slider__arrow poster-slider__arrow--prev" aria-label="Geser ke kiri" disabled>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>
+            </button>
+            <div class="poster-slider">
+                <?php foreach ($wpmHomeRow['items'] as $wpmHomeRowArticle) : ?>
+                    <?= wpm_poster_card($wpmHomeRowArticle) ?>
+                <?php endforeach; ?>
+            </div>
+            <button type="button" class="poster-slider__arrow poster-slider__arrow--next" aria-label="Geser ke kanan">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+            </button>
+        </div>
+    </div>
+    <?php endforeach; ?>
 
     <!-- ══════════ APLIKASI ZONASINEMA — SEGERA HADIR (shared w/ tentang.php) ══════════ -->
     <?= wpm_app_promo_section($pdo) ?>

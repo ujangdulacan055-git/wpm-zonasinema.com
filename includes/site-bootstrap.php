@@ -903,6 +903,38 @@ function wpm_news_byline(array $article): string
 }
 
 /**
+ * Info rilis KHUSUS buat hero besar homepage (24 Agu 2026) — ganti byline
+ * nama-admin+waktu-artikel (gak relevan, sisa pola berita) jadi status
+ * tayang film: "Tayang di Bioskop · <tahun>" (label sama persis kayak
+ * artikel.php punya, biar konsisten) kalau release_date udah lewat,
+ * "Segera Tayang" kalau di masa depan. Fallback ke wpm_news_byline() lama
+ * kalau films.release_date NULL (film tanpa data TMDb). CUMA dipakai
+ * wpm_news_hero_card() — wpm_news_list_row()/wpm_poster_card() TIDAK
+ * disentuh, itu kebutuhan beda (badge rating, dst).
+ */
+function wpm_film_hero_release_info(array $article): string
+{
+    $releaseDate = trim((string) ($article['release_date'] ?? ''));
+    if ($releaseDate === '') {
+        return wpm_news_byline($article);
+    }
+
+    $ts = strtotime($releaseDate);
+    if ($ts === false) {
+        return wpm_news_byline($article);
+    }
+
+    $year = wpm_format_date($releaseDate, 'Y');
+    $statusLabel = $ts <= time() ? 'Tayang di Bioskop' : 'Segera Tayang';
+
+    $parts = [wpm_esc($statusLabel)];
+    if ($year !== '' && $year !== '—') {
+        $parts[] = wpm_esc($year);
+    }
+    return implode(' <span class="news-byline__dot">·</span> ', $parts);
+}
+
+/**
  * Big hero card for the top of the homepage feed — full-width backdrop
  * image, title + byline overlaid on the image (gradient bawah), 24 Agu
  * 2026 revisi: sebelumnya pakai featured_image (poster potret 2:3)
@@ -927,7 +959,7 @@ function wpm_news_hero_card(array $article): string
     $html .= $media;
     $html .= '<div class="news-hero__overlay">';
     $html .= '<h2 class="news-hero__title">' . wpm_esc((string) $article['title']) . '</h2>';
-    $html .= '<div class="news-byline">' . wpm_news_byline($article) . '</div>';
+    $html .= '<div class="news-byline">' . wpm_film_hero_release_info($article) . '</div>';
     $html .= '</div>';
     $html .= '</a>';
     $html .= '</article>';
