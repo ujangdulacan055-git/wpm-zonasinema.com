@@ -32,7 +32,7 @@ $stickyAd = (empty($adSettings) || ((int) ($adSettings['ads_enabled'] ?? 1) === 
                 <a href="<?= wpm_esc(wpm_site_url('')) ?>" class="crypto-logo footer-brand__logo">
                     <img class="crypto-logo__mark crypto-logo__mark--wide footer-brand__logo-mark" src="<?= wpm_esc(wpm_site_url('assets/img/branding/logo-zonasinema-white-transparent.png')) ?>" alt="ZonaSinema">
                 </a>
-                <p>Portal review dan database film.</p>
+                <p>Temukan film favoritmu di ZONASINEMA.<br>Jelajahi informasi film, rating, genre, trailer, sinopsis, dan rekomendasi pilihan dalam satu tempat.</p>
             </div>
             <div>
                 <p class="footer-heading">Jelajahi</p>
