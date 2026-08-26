@@ -167,7 +167,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
                         <?php endforeach; ?>
                     </div>
                 </details>
-                <a href="berita.php" class="<?= ($activeNav ?? '') === 'berita-tips' ? 'is-active' : '' ?>">Berita &amp; Tips</a>
+                <a href="berita.php" class="<?= ($activeNav ?? '') === 'berita-tips' ? 'is-active' : '' ?>">Kabar Film</a>
                 <!-- Ganti dari toggle Mode Gelap (24 Agu 2026, brief
                      GANTI-DARKMODE-KE-REQUEST-MOVIE) — tema gelap/terang
                      tetap jalan otomatis (localStorage/prefers-color-scheme,

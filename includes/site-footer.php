@@ -112,7 +112,7 @@ $stickyAd = (empty($adSettings) || ((int) ($adSettings['ads_enabled'] ?? 1) === 
                 <?php endforeach; ?>
             </div>
         </details>
-        <a href="berita.php" class="<?= ($activeNav ?? '') === 'berita-tips' ? 'is-active' : '' ?>">Berita &amp; Tips</a>
+        <a href="berita.php" class="<?= ($activeNav ?? '') === 'berita-tips' ? 'is-active' : '' ?>">Kabar Film</a>
         <a href="request-film.php" class="<?= ($activeNav ?? '') === 'request-film' ? 'is-active' : '' ?>">Request Movie</a>
     </div>
 </div>
