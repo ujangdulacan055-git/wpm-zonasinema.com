@@ -329,6 +329,23 @@ $filmYear = wpm_format_date($filmReleaseSource, 'Y');
 $filmReleaseDisplay = wpm_format_date($filmReleaseSource, 'd F Y');
 $filmSummary = wpm_excerpt((string) ($article['excerpt'] ?: $article['content']), 220);
 
+// Badge status tayang (26 Agu 2026, samain istilah kayak hero homepage /
+// wpm_film_hero_release_info()) — "Tayang di Bioskop" cuma valid kalau
+// release_date udah lewat, kalau masih di masa depan (film blm rilis)
+// ganti "Segera Tayang". Sebelumnya label "Tayang di Bioskop" di-hardcode
+// di sini tanpa cek tanggal sama sekali, jadi film yang belum tayang pun
+// ikut nampilin itu — salah. Logic dituliskan inline (bukan manggil
+// wpm_film_hero_release_info() langsung) karena markup badge di halaman
+// ini beda bentuk (sudah ada wrapper span sendiri), tapi istilah/threshold
+// waktu-nya sama persis biar konsisten di seluruh situs.
+$filmReleaseStatusLabel = 'Tayang di Bioskop';
+if ($film !== null && $film['release_date'] !== null) {
+    $filmReleaseTs = strtotime((string) $film['release_date']);
+    if ($filmReleaseTs !== false && $filmReleaseTs > time()) {
+        $filmReleaseStatusLabel = 'Segera Tayang';
+    }
+}
+
 require __DIR__ . '/includes/site-header.php';
 ?>
 
@@ -354,7 +371,7 @@ require __DIR__ . '/includes/site-header.php';
                 <?php if ($filmDummyAgeRating !== null) : ?>
                     <span class="film-hero__age"><?= wpm_esc($filmDummyAgeRating) ?></span>
                 <?php endif; ?>
-                <span class="film-hero__note">Tayang di Bioskop<?= $filmYear !== '' ? ' · ' . wpm_esc($filmYear) : '' ?></span>
+                <span class="film-hero__note"><?= wpm_esc($filmReleaseStatusLabel) ?><?= $filmYear !== '' ? ' · ' . wpm_esc($filmYear) : '' ?></span>
             </div>
             <h1><?= wpm_esc((string) $article['title']) ?></h1>
 
