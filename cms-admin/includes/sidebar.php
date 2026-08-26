@@ -8,7 +8,7 @@ declare(strict_types=1);
  * logged-in admin", matching the tiers documented in cms_require_role()
  * (functions.php): editor gets Pages & Articles, Media Library, SEO
  * Dashboard, and Banners only; admin gets everything except Admin Users,
- * AI Credentials, and Livescore API Settings; superadmin is unrestricted. This is
+ * AI Credentials, and TMDB API Settings; superadmin is unrestricted. This is
  * display-only — the actual enforcement lives in each page's own
  * cms_require_role() call, so a stale/cached sidebar can never grant real
  * access, only hide/show a link to it.
@@ -46,17 +46,16 @@ $integrationsNavGroup = [
     'label' => 'Integrations',
     'icon' => 'plug',
     'items' => [
-        // League Settings (leagues.is_active/sort_order toggle UI) removed —
-        // it existed to curate the old /liga hub (deleted in the multi-sport
-        // pivot). The `leagues` table itself stays (Football Matches' League
-        // column, cron/sync_leagues_teams.php name resolution). Note:
-        // is_active/sort_order are still read by wpm_active_leagues() for
-        // the homepage's league filter chips — that's now DB-edit-only.
-        // Holds the raw API key(s) — superadmin-only, same tier as Admin Users/AI Credentials.
-        // Consolidated hub: one page, accordion per sport (football/basketball/motorsport) — see
-        // cms-admin/pages/livescore-api-settings.php's docblock for why the other 2 settings pages
-        // (formerly separate sidebar entries) were folded in here instead of staying standalone.
-        ['id' => 'livescore-api-settings', 'label' => 'Livescore API Settings', 'href' => cms_nav_href('livescore-api-settings.php'), 'icon' => 'link', 'roles' => $ROLES_SUPER_ONLY],
+        // TMDB API Settings (26 Agu 2026) — dulu "Livescore API Settings",
+        // sisa leftover dari project sibling sagagoal.com (situs livescore)
+        // yang ke-bawa pas fork jadi WPM2. Halaman aslinya
+        // (livescore-api-settings.php) gak pernah ada di project ini —
+        // link mati/404 kalau diklik, ketauan operator lewat screenshot.
+        // ZonaSinema 100% situs film, satu-satunya API eksternal yang
+        // beneran dipakai cuma TMDB (scripts/import-tmdb.php) — jadi
+        // diganti halaman status TMDB (read-only, lihat docblock
+        // tmdb-api-settings.php buat alasan kenapa gak simpan token di DB).
+        ['id' => 'tmdb-api-settings', 'label' => 'TMDB API Settings', 'href' => cms_nav_href('tmdb-api-settings.php'), 'icon' => 'link', 'roles' => $ROLES_SUPER_ONLY],
     ],
 ];
 

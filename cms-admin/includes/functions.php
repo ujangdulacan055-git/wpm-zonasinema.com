@@ -94,7 +94,7 @@ function cms_verify_csrf(): void
  *   - editor:     Pages & Articles (+ Categories/Tags), Media Library,
  *                 SEO Dashboard, Banners. Nothing else.
  *   - admin:      Everything editor has, plus everything else EXCEPT
- *                 Admin Users, AI Credentials, and Livescore API Settings
+ *                 Admin Users, AI Credentials, and TMDB API Settings
  *                 (all three touch account/API-key secrets).
  *   - superadmin: Everything, no restrictions. Also the only role that can
  *                 create/edit/view "External Ad Code" ads (see ads.php —
