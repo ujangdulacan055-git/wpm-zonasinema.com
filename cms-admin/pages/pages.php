@@ -108,7 +108,7 @@ try {
 }
 $pgValidSportKeys = array_merge(array_column($articleSports, 'key'), [$pgSportKeyGeneral]);
 
-$pg_validate = static function (string $title, string $slug, string $status, string $sportKey, array $validSportKeys) : ?string {
+$pg_validate = static function (string $title, string $slug, string $status) : ?string {
     if ($title === '') {
         return 'Title is required.';
     }
@@ -118,12 +118,10 @@ $pg_validate = static function (string $title, string $slug, string $status, str
     if (!in_array($status, ['draft', 'published'], true)) {
         return 'Status must be draft or published.';
     }
-    // Required as of 26 Jul 2026 — an empty sport_key silently excluded
-    // articles from every homepage sport filter chip (Sepak Bola/Basket/
-    // Formula 1), and nobody noticed until it was investigated directly.
-    if (!in_array($sportKey, $validSportKeys, true)) {
-        return 'Cabang Sport wajib dipilih agar artikel muncul di filter livescore.';
-    }
+    // "Cabang Sport wajib dipilih" requirement DIHAPUS (26 Agu 2026) —
+    // leftover project sibling sagagoal.com (situs livescore multi-sport).
+    // ZonaSinema 100% situs film, gak ada filter cabang sport/livescore
+    // sama sekali, field ini cuma bikin bingung tiap nambah artikel.
 
     return null;
 };
@@ -223,7 +221,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
         }
     }
 
-    $validationError = $pg_validate($title, $slug, $status, (string) ($sportKey ?? ''), $pgValidSportKeys);
+    $validationError = $pg_validate($title, $slug, $status);
     if ($validationError !== null) {
         $errorQuery = null;
         if ($action === 'update') {
@@ -633,15 +631,6 @@ require dirname(__DIR__) . '/includes/alerts.php';
                 </select>
             </label>
             <?php endif; ?>
-            <label class="field">Cabang Sport
-                <select name="sport_key" class="js-pg-sport-key" required>
-                    <option value="" disabled<?= (string) ($editRow['sport_key'] ?? '') === '' ? ' selected' : '' ?>>— Pilih cabang sport —</option>
-                    <?php foreach ($articleSports as $sport) : ?>
-                        <option value="<?= cms_esc((string) $sport['key']) ?>"<?= (string) ($editRow['sport_key'] ?? '') === (string) $sport['key'] ? ' selected' : '' ?>><?= cms_esc((string) $sport['name']) ?></option>
-                    <?php endforeach; ?>
-                    <option value="<?= cms_esc($pgSportKeyGeneral) ?>"<?= (string) ($editRow['sport_key'] ?? '') === $pgSportKeyGeneral ? ' selected' : '' ?>>Umum / Semua Cabang</option>
-                </select>
-                <small style="font-size:11px;color:var(--muted,#888);display:block;margin-top:6px;">Wajib diisi — menentukan apakah artikel ini muncul saat pengunjung klik filter Sepak Bola/Basket/Formula 1 di homepage. Pilih "Umum / Semua Cabang" kalau artikel tidak membahas satu cabang spesifik.</small>
             </label>
             <label class="field">Author
                 <select name="author_id">
@@ -825,15 +814,6 @@ require dirname(__DIR__) . '/includes/alerts.php';
                 </select>
             </label>
             <?php endif; ?>
-            <label class="field">Cabang Sport
-                <select name="sport_key" class="js-pg-sport-key" required>
-                    <option value="" disabled selected>— Pilih cabang sport —</option>
-                    <?php foreach ($articleSports as $sport) : ?>
-                        <option value="<?= cms_esc((string) $sport['key']) ?>"><?= cms_esc((string) $sport['name']) ?></option>
-                    <?php endforeach; ?>
-                    <option value="<?= cms_esc($pgSportKeyGeneral) ?>">Umum / Semua Cabang</option>
-                </select>
-                <small style="font-size:11px;color:var(--muted,#888);display:block;margin-top:6px;">Wajib diisi — menentukan apakah artikel ini muncul saat pengunjung klik filter Sepak Bola/Basket/Formula 1 di homepage. Pilih "Umum / Semua Cabang" kalau artikel tidak membahas satu cabang spesifik.</small>
             </label>
             <label class="field">Author
                 <select name="author_id">
@@ -1862,26 +1842,6 @@ require dirname(__DIR__) . '/includes/alerts.php';
         slugEl.addEventListener('input', function () {
             locked = true;
         });
-    });
-})();
-</script>
-<script>
-// ---- Require "Cabang Sport" before an article can be saved (26 Jul 2026) ----
-// Server-side is the real gate (see $pg_validate in this file) — this is
-// just the friendlier, immediate version so admins don't have to submit
-// first to find out. setCustomValidity() is used instead of relying on the
-// browser's default "please select an item" text, so the message actually
-// explains WHY the field matters (it drives the homepage sport filter
-// chips), not just that it's empty.
-(function () {
-    var SPORT_KEY_MESSAGE = 'Cabang Sport wajib dipilih agar artikel muncul di filter livescore.';
-    document.querySelectorAll('.js-pg-sport-key').forEach(function (select) {
-        var check = function () {
-            select.setCustomValidity(select.value === '' ? SPORT_KEY_MESSAGE : '');
-        };
-        check();
-        select.addEventListener('change', check);
-        select.addEventListener('invalid', check);
     });
 })();
 </script>
