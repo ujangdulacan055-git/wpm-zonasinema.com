@@ -1002,7 +1002,16 @@ function wpm_poster_card(array $article): string
         ? '<img src="' . wpm_esc($img) . '" alt="' . wpm_esc((string) $article['title']) . '" loading="lazy">'
         : wpm_icon('news');
     $url = wpm_url_artikel((string) $article['slug']);
-    $year = wpm_format_date($article['published_at'] ?? null, 'Y');
+    // Tahun badge di poster card (26 Agu 2026, fix bug operator): pakai
+    // films.release_date (tanggal rilis FILM sebenarnya) kalau tersedia,
+    // BUKAN published_at (tanggal artikel dibuat/diimpor di situs) —
+    // sebelumnya semua card nampilin tahun impor (mis. 2026 semua) karena
+    // baca published_at, padahal film-nya sendiri rilis di tahun lain.
+    // Fallback ke published_at cuma buat caller lama yang belum nge-SELECT
+    // f.release_date sama sekali (biar tetap ada badge, bukan kosong).
+    $year = !empty($article['release_date'])
+        ? wpm_format_date($article['release_date'], 'Y')
+        : wpm_format_date($article['published_at'] ?? null, 'Y');
     $category = trim((string) ($article['category_name'] ?? ''));
     $rating = isset($article['vote_average']) && $article['vote_average'] !== null ? (float) $article['vote_average'] : null;
 

@@ -34,19 +34,16 @@ $params = [];
  * films/film_genres, dipakai genre bar di includes/site-header.php. Beda
  * dari mode kategori/tag/league di atas (yang query article_categories/
  * article_tags/leagues) — sengaja dipisah karena films JOIN pages, bukan
- * kolom pages langsung. ──
- *
- * Selalu true (24 Agu 2026, fix bug) — ZonaSinema 100% film sekarang,
- * gak ada lagi mode "artikel biasa". Sebelumnya cuma true kalau ada
- * genre/tahun/populer aktif, jadi "Semua Film" (tanpa filter) masih
- * kepeleset render pakai wpm_article_card() (kartu blog "BERITA") bukan
- * poster grid. Efek ke $where (baris di bawah, restrict ke page_id yang
- * ada row-nya di `films`) sengaja ikut selalu aktif juga — itu benar,
- * bukan cuma efek samping: "Semua Film" memang harus cuma nampilin
- * halaman yang beneran film, bukan sisa artikel non-film apapun. Genre/
- * tahun spesifik tetap kondisional di bawah (masih cek $genreSlug/
- * $filmYear masing-masing). */
-$isFilmFilterMode = true;
+ * kolom pages langsung. ── */
+$isFilmFilterMode = $genreSlug !== '' || $filmYear !== '' || $filmPopular;
+/* ZonaSinema murni film — kartu selalu render sebagai poster (bukan artikel),
+ * TAPI ini dipisah dari $isFilmFilterMode di atas karena variabel itu juga
+ * menggerbang WHERE clause (baris di bawah) yang membatasi query ke
+ * page_id yang ada di tabel films. Kalau dipaksa selalu true, "Semua Film"
+ * (tanpa filter genre/tahun/populer) jadi ikut nge-block artikel yang belum
+ * ke-link ke films. $useFilmCardLayout aman selalu true karena cuma
+ * ngatur badge/grid/renderer kartu, bukan query. (23 Agu 2026, Bagian B) */
+$useFilmCardLayout = true;
 if ($isFilmFilterMode) {
     $where .= ' AND p.page_id IN (SELECT page_id FROM films)';
     if ($genreSlug !== '') {
@@ -114,7 +111,7 @@ $orderBy = ($isFilmFilterMode && $filmPopular)
     : 'p.published_at DESC';
 
 $listStmt = $pdo->prepare(
-    "SELECT p.*, c.name AS category_name, c.slug AS category_slug, f.vote_average
+    "SELECT p.*, c.name AS category_name, c.slug AS category_slug, f.vote_average, f.release_date
      FROM pages p
      LEFT JOIN article_categories c ON c.id = p.category_id
      LEFT JOIN films f ON f.page_id = p.page_id
@@ -217,13 +214,13 @@ require __DIR__ . '/includes/site-header.php';
             <?php if ($category !== null) : ?><span>/</span> <?= wpm_esc($category['name']) ?><?php endif; ?>
             <?php if ($league !== null) : ?><span>/</span> <?= wpm_esc($league['name']) ?><?php endif; ?>
         </nav>
-        <span class="section-kicker"><?= $isFilmFilterMode ? 'Film' : 'Berita' ?></span>
+        <span class="section-kicker"><?= $useFilmCardLayout ? 'Film' : 'Berita' ?></span>
         <h1><?= wpm_esc($heroTitle) ?></h1>
-        <p><?= wpm_esc(strip_tags($heroSubtitle)) ?> <?= wpm_esc((string) $totalArticles) ?> <?= $isFilmFilterMode ? 'film' : 'artikel' ?>.</p>
+        <p><?= wpm_esc(strip_tags($heroSubtitle)) ?> <?= wpm_esc((string) $totalArticles) ?> <?= $useFilmCardLayout ? 'film' : 'artikel' ?>.</p>
     </div>
 </section>
 
-<?php if (!$isFilmFilterMode && $allCategories !== []) : ?>
+<?php if (!$useFilmCardLayout && $allCategories !== []) : ?>
 <div class="crypto-container" style="margin-bottom:8px;">
     <div style="display:flex;gap:10px;flex-wrap:wrap;">
         <a class="crypto-btn crypto-btn--ghost" style="padding:8px 16px;font-size:13px;<?= $category === null && $tag === null ? 'background:var(--grad-brand);color:#fff;' : '' ?>" href="<?= wpm_esc(wpm_url_kategori()) ?>">Semua</a>
@@ -245,9 +242,9 @@ require __DIR__ . '/includes/site-header.php';
                     $betweenCardsAdHtml = wpm_render_ad_slot($pdo, 'between-article-cards', 'category', $category['id'] ?? null);
                     $adInsertAfter = min(5, count($articles) - 1);
                     ?>
-                    <div class="<?= $isFilmFilterMode ? 'poster-grid' : 'crypto-grid crypto-grid--3' ?>">
+                    <div class="<?= $useFilmCardLayout ? 'poster-grid' : 'crypto-grid crypto-grid--3' ?>">
                         <?php foreach ($articles as $i => $article) : ?>
-                            <?= $isFilmFilterMode ? wpm_poster_card($article) : wpm_article_card($article) ?>
+                            <?= $useFilmCardLayout ? wpm_poster_card($article) : wpm_article_card($article) ?>
                             <?php if ($betweenCardsAdHtml !== '' && $i === $adInsertAfter) : ?>
                                 <div class="news-grid__ad"><?= $betweenCardsAdHtml ?></div>
                             <?php endif; ?>

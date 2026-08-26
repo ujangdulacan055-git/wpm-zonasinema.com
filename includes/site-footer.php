@@ -103,7 +103,7 @@ $stickyAd = (empty($adSettings) || ((int) ($adSettings['ads_enabled'] ?? 1) === 
             <summary>Tahun Rilis
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M6 9l6 6 6-6"/></svg>
             </summary>
-            <div class="nav-dropdown__panel">
+            <div class="nav-dropdown__panel nav-dropdown__panel--years">
                 <?php if ($wpmNavYears === []) : ?>
                     <span class="nav-dropdown__empty">Belum ada data tahun</span>
                 <?php endif; ?>

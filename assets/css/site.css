@@ -511,6 +511,18 @@ body.crypto-theme {
 .nav-dropdown__panel a.is-active { color: var(--accent); background: var(--surface-glass-2); }
 .nav-dropdown__empty { padding: 8px 12px; font-size: 13px; color: var(--text-faint); }
 
+/* Panel "Tahun Rilis" (26 Agu 2026, fix operator: dropdown-nya kepanjangan
+   ke bawah pas tahun film udah banyak, 2007-2026 = 20 baris 1 kolom).
+   Layout 2 kolom (kayak referensi screenshot operator) + cap tinggi +
+   scroll internal buat jaga-jaga kalau tahunnya makin nambah ke depan —
+   dropdown tetap pendek/compact, gak makan sepanjang layar lagi. Genre
+   dibiarkan 1 kolom seperti semula (cuma 8 item, gak butuh ini). */
+.nav-dropdown__panel--years {
+  display: grid; grid-template-columns: repeat(2, 1fr); gap: 2px;
+  max-height: 260px; overflow-y: auto;
+}
+.nav-dropdown__panel--years .nav-dropdown__empty { grid-column: 1 / -1; }
+
 /* Desktop only: panel jadi popover melayang di bawah trigger. Di mobile
    drawer (.crypto-nav__mobile-panel .nav-dropdown), biarin default block
    (ngalir normal di antara link lain di drawer). */
@@ -553,6 +565,16 @@ body.crypto-theme {
 /* Poster slider (homepage "Film Terbaru" strip, reuses article cards as posters) */
 .poster-slider__head { display: flex; align-items: baseline; justify-content: space-between; margin: 32px 0 16px; }
 .poster-slider__head h2 { font-family: var(--font-display); font-size: 24px; letter-spacing: 0.02em; margin: 0; }
+
+/* "Semua Film" per row genre (26 Agu 2026, fix operator: spec asli devs
+   prompt minta tombol kuning tapi implementasinya kepasang cuma jadi
+   link teks polos, class-nya nggak pernah ada style-nya). Samain pola
+   sama .nav-link--request (accent bg, teks gelap, pill-rounded). */
+.poster-slider__more {
+  background: var(--accent); color: #1a1206 !important; font-weight: 800; font-size: 13px;
+  padding: 7px 16px; border-radius: 999px; white-space: nowrap; flex-shrink: 0;
+}
+.poster-slider__more:hover { background: var(--accent-hover); color: #1a1206 !important; }
 /* Tombol "Semua Film" tiap row genre (24 Agu 2026) — kuning/gold,
    konsisten sama tombol "Request Movie" & aksen situs lainnya. */
 .poster-slider__more {

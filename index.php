@@ -93,7 +93,7 @@ $wpmHomeRows = [];
 $wpmHomeRowLimit = 14;
 
 $rowLatestStmt = $pdo->prepare(
-    "SELECT p.*, f.vote_average
+    "SELECT p.*, f.vote_average, f.release_date
      FROM pages p
      LEFT JOIN films f ON f.page_id = p.page_id
      WHERE p.status = 'published'
@@ -113,7 +113,7 @@ $wpmGenreRowDefs = [
     ['slug' => 'romansa', 'title' => 'Romance Terbaru'],
 ];
 $rowGenreStmt = $pdo->prepare(
-    "SELECT p.*, f.vote_average
+    "SELECT p.*, f.vote_average, f.release_date
      FROM pages p
      JOIN films f ON f.page_id = p.page_id
      JOIN film_genre_map fgm ON fgm.film_id = f.id
@@ -141,7 +141,7 @@ foreach ($wpmGenreRowDefs as $wpmGenreRowDef) {
 // filter "sebelum tahun X", sengaja gak dipaksain bikin filter baru di
 // luar scope brief ini, row-nya tetap tampil tanpa tombol itu.
 $rowOldStmt = $pdo->prepare(
-    "SELECT p.*, f.vote_average
+    "SELECT p.*, f.vote_average, f.release_date
      FROM pages p
      JOIN films f ON f.page_id = p.page_id
      WHERE p.status = 'published' AND f.release_date < '2020-01-01'
