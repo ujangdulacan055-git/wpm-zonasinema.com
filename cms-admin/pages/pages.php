@@ -631,7 +631,6 @@ require dirname(__DIR__) . '/includes/alerts.php';
                 </select>
             </label>
             <?php endif; ?>
-            </label>
             <label class="field">Author
                 <select name="author_id">
                     <option value="">— Default (current admin) —</option>
@@ -814,7 +813,6 @@ require dirname(__DIR__) . '/includes/alerts.php';
                 </select>
             </label>
             <?php endif; ?>
-            </label>
             <label class="field">Author
                 <select name="author_id">
                     <option value="">— Default (current admin) —</option>
