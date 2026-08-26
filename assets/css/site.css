@@ -2081,9 +2081,16 @@ a.contact-info-row__value:hover { color: var(--cyan); }
 }
 .search-form input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.2); }
 .search-form button {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
   padding: 0 26px; border-radius: 999px; border: none; background: var(--grad-brand); color: #fff;
   font-weight: 600; cursor: pointer;
 }
+/* 26 Agu 2026, fix operator: icon svg dari wpm_icon('search') gak punya
+   width/height di sini (beda dari tombol ikon lain di situs yang semua
+   udah punya rule size), jadi jatuh ke ukuran default browser yang
+   kegedean lalu ke-clip sama overflow pill-nya — hasilnya tombol keliatan
+   bulet kuning polos tanpa ikon sama sekali. */
+.search-form button svg { width: 18px; height: 18px; flex-shrink: 0; }
 
 .empty-state { text-align: center; padding: 60px 20px; color: var(--text-faint); }
 .empty-state svg { width: 40px; height: 40px; margin-bottom: 14px; opacity: 0.5; }
