@@ -20,6 +20,23 @@ cms_require_role(['superadmin']);
 $gsc_schemaError = null;
 try {
     cms_gsc_ensure_schema($pdo);
+
+    // Bug fix (26 Agu 2026): cms_gsc_ensure_schema() cuma nge-INSERT baris
+    // singleton pertama kalau TABEL-nya baru dibuat ($created === true).
+    // Tabel gsc_settings di project ini "diported" dari sibling
+    // SagaCrypto (27 Jul 2026) — kemungkinan besar tabelnya udah ada tapi
+    // baris singleton-nya nol. Akibatnya: form "connect" di bawah
+    // nge-UPDATE ... LIMIT 1 TANPA WHERE, yang kalau tabelnya kosong sama
+    // sekali update 0 baris (PDO gak nge-throw buat ini) — flash message
+    // "terhubung" tetap muncul (proses test koneksi ke Google-nya emang
+    // beneran sukses), TAPI hasil encrypt JSON-nya gak pernah kesimpen ke
+    // manapun, jadi reload berikutnya balik lagi ke Langkah 1 kosong.
+    // Guard ini mastiin minimal 1 baris selalu ada sebelum UPDATE manapun
+    // jalan — sama pola kayak ad_settings.php/site_settings.
+    $gscRowCount = (int) $pdo->query('SELECT COUNT(*) FROM gsc_settings')->fetchColumn();
+    if ($gscRowCount === 0) {
+        $pdo->exec('INSERT INTO gsc_settings (is_active) VALUES (0)');
+    }
 } catch (Throwable $e) {
     $gsc_schemaError = $e->getMessage();
 }
