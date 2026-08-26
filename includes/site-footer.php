@@ -70,13 +70,16 @@ $stickyAd = (empty($adSettings) || ((int) ($adSettings['ads_enabled'] ?? 1) === 
                 <span>Portal review &amp; database film.</span>
             </div>
 
-            <!-- Atribusi wajib TMDb (syarat pakai API mereka) — lihat
+            <!-- Atribusi TMDb (syarat pakai API mereka) — lihat
                  docs/BRIEF-INTEGRASI-TMDB-SKEMA-FILM.md Bagian A poin 4.
                  JANGAN DIHAPUS TOTAL selama situs masih pakai data TMDb —
-                 bisa bikin akses API dicabut. Boleh dikecilin/ditaruh di
-                 baris paling bawah (24 Agu 2026, permintaan operator), asal
-                 tetap ada & link ke themoviedb.org tetap utuh. -->
-            <p class="footer-disclaimer footer-disclaimer--tmdb">Powered by <a href="https://www.themoviedb.org/" target="_blank" rel="noopener">TMDb</a> — situs ini menggunakan TMDb API namun tidak didukung atau disertifikasi oleh TMDb.</p>
+                 bisa bikin akses API dicabut. Kalimat disclaimer resmi
+                 ("...namun tidak didukung atau disertifikasi oleh TMDb")
+                 sengaja DIPERPENDEK jadi "Powered by TMDb" doang (24 Agu
+                 2026, keputusan eksplisit operator setelah diinfoin ini
+                 bagian dari syarat ToS TMDb — link ke themoviedb.org
+                 tetap dipertahankan). -->
+            <p class="footer-disclaimer footer-disclaimer--tmdb">Powered by <a href="https://www.themoviedb.org/" target="_blank" rel="noopener">TMDb</a></p>
         </div>
     </div>
 </footer>
