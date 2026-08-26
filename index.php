@@ -200,7 +200,7 @@ require __DIR__ . '/includes/site-header.php';
 
                 <?php if ($feedArticles !== []) : ?>
                     <div class="poster-slider__head">
-                        <h2><?= $tab === 'terbaru' ? 'Film Terbaru' : 'Film Terpopuler' ?></h2>
+                        <h2>Rekomendasi Untukmu</h2>
                     </div>
                     <div class="poster-slider-wrap">
                         <button type="button" class="poster-slider__arrow poster-slider__arrow--prev" aria-label="Geser ke kiri" disabled>
