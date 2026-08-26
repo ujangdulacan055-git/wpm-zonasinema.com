@@ -68,7 +68,7 @@ $tags = $tagStmt->fetchAll();
 $related = [];
 if (!empty($article['category_id'])) {
     $relStmt = $pdo->prepare(
-        "SELECT p.*, c.name AS category_name, f.vote_average
+        "SELECT p.*, c.name AS category_name, f.vote_average, f.release_date
          FROM pages p
          LEFT JOIN article_categories c ON c.id = p.category_id
          LEFT JOIN films f ON f.page_id = p.page_id
@@ -83,7 +83,7 @@ if (count($related) < 4) {
     $excludeIds = array_merge([$pageId], array_column($related, 'page_id'));
     $placeholders = implode(',', array_fill(0, count($excludeIds), '?'));
     $fallStmt = $pdo->prepare(
-        "SELECT p.*, c.name AS category_name, f.vote_average
+        "SELECT p.*, c.name AS category_name, f.vote_average, f.release_date
          FROM pages p
          LEFT JOIN article_categories c ON c.id = p.category_id
          LEFT JOIN films f ON f.page_id = p.page_id

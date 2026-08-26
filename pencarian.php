@@ -29,7 +29,7 @@ if (mb_strlen($query) >= 2) {
     $offset = ($page - 1) * $perPage;
 
     $listStmt = $pdo->prepare(
-        "SELECT p.*, c.name AS category_name, f.vote_average
+        "SELECT p.*, c.name AS category_name, f.vote_average, f.release_date
          FROM pages p
          LEFT JOIN article_categories c ON c.id = p.category_id
          LEFT JOIN films f ON f.page_id = p.page_id
