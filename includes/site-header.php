@@ -97,23 +97,23 @@ $jsVer   = @filemtime($jsPath) ?: 1;
     <link rel="stylesheet" href="assets/css/site.css?v=<?= (int) $cssVer ?>">
     <?= $extraHead ?? '' ?>
 
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-HZ988K60RH"></script>
+    <!-- Google tag (gtag.js) — 26 Agu 2026: ganti ID lama (G-HZ988K60RH,
+         placeholder dari sesi devs sebelumnya) ke properti GA4 asli milik
+         operator. -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-1G3ZCPFR6F"></script>
     <script>
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
 
-      gtag('config', 'G-HZ988K60RH');
+      gtag('config', 'G-1G3ZCPFR6F');
     </script>
 
-    <!-- Google Tag Manager -->
-<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-})(window,document,'script','dataLayer','GTM-PSSVTMGS');</script>
-<!-- End Google Tag Manager -->
+    <!-- Google Tag Manager — SENGAJA DILEPAS SEMENTARA (26 Agu 2026).
+         Container ID lama (GTM-PSSVTMGS) bukan punya operator (placeholder
+         dari sesi devs sebelumnya, ID Google Tag Manager account orang
+         lain) — jangan dipasang lagi sampai operator bikin container GTM
+         sendiri dan kasih ID yang bener. Lihat docs/ROADMAP.md. -->
 </head>
 <body class="crypto-theme">
 <div class="crypto-bg" aria-hidden="true"></div>
